@@ -66,7 +66,7 @@ pnpm dev
 
 개발 서버는 http://localhost:3000 에서, Supabase Studio는 http://127.0.0.1:54323 에서 열린다.
 
-`pnpm db:start`와 `pnpm db:reset`은 로컬 스택을 `hamtteukka-local` 네트워크에서 실행해 포트를 `127.0.0.1`에만 연다. Docker Engine 28.0.0 미만은 `127.0.0.1`에 연 포트도 같은 L2 구간의 다른 기기가 접근할 수 있으므로, 스크립트가 경고를 출력하면 Docker를 업데이트한다. 바인딩 주소는 `docker ps`의 PORTS 칸에서 `127.0.0.1:54321->8000/tcp`처럼 보이는지로 확인한다. 이 네트워크를 쓰기 전에 띄운 스택은 포트가 `0.0.0.0`에 남아 있으므로 `pnpm db:stop` 뒤 `pnpm db:start`로 다시 띄운다. `supabase start`를 직접 실행하면 포트가 `0.0.0.0`에 열리므로 `pnpm db:start`를 쓴다.
+`pnpm db:start`와 `pnpm db:reset`은 로컬 스택을 `hamtteukka-local` 네트워크에서 실행해 포트를 `127.0.0.1`에만 연다. Docker Engine 28.0.0 미만은 `127.0.0.1`에 연 포트도 같은 L2 구간의 다른 기기가 접근할 수 있으므로, 스크립트가 경고를 출력하면 Docker를 업데이트한다. 바인딩 주소는 `docker ps`의 PORTS 칸에서 `127.0.0.1:54321->8000/tcp`처럼 보이는지로 확인한다. 이 네트워크를 쓰기 전에 띄운 스택이 실행 중이면 두 명령은 멈추고 `pnpm db:stop` 뒤 다시 실행하라고 안내한다. `supabase start`를 직접 실행하면 포트가 `0.0.0.0`에 열리므로 `pnpm db:start`를 쓴다.
 
 | 명령 | 하는 일 |
 |---|---|

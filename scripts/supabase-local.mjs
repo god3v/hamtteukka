@@ -3,8 +3,10 @@
 // Supabase CLI는 기본으로 포트를 0.0.0.0에 열어 같은 네트워크의 다른 기기가 Studio와 DB에 접속할 수 있다.
 // 사용: node scripts/supabase-local.mjs <start|reset> [supabase 옵션...]
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const NETWORK = "hamtteukka-local";
 const BIND_OPTION = "com.docker.network.bridge.host_binding_ipv4";
@@ -20,6 +22,19 @@ if (!Object.hasOwn(COMMANDS, command)) {
 // 셸을 거치지 않고 실행해 인수 경계를 그대로 전달한다. Windows에서도 docker는 docker.exe로 바로 실행된다.
 function run(bin, args, options = {}) {
   return spawnSync(bin, args, { stdio: "inherit", shell: false, ...options });
+}
+
+// supabase 패키지의 실행 파일은 Node 스크립트이므로 현재 Node로 직접 실행한다. Windows의 .cmd 래퍼를 거치지 않는다.
+const require = createRequire(import.meta.url);
+const supabaseBin = join(dirname(require.resolve("supabase/package.json")), "dist", "supabase.js");
+function runSupabase(args) {
+  const result = run(process.execPath, [supabaseBin, ...args]);
+  process.exit(result.status ?? 1);
+}
+
+// 도움말은 Docker 상태와 상관없이 보여 주고, 네트워크도 만들지 않는다.
+if (extraArgs.includes("--help") || extraArgs.includes("-h")) {
+  runSupabase([...COMMANDS[command], ...extraArgs]);
 }
 
 const inspect = run("docker", ["network", "inspect", NETWORK, "--format", `{{.Driver}} {{index .Options "${BIND_OPTION}"}}`], {
@@ -61,8 +76,21 @@ if (inspect.status === 0) {
   }
 }
 
-// supabase 패키지의 실행 파일은 Node 스크립트이므로 현재 Node로 직접 실행한다. Windows의 .cmd 래퍼를 거치지 않는다.
-const require = createRequire(import.meta.url);
-const supabaseBin = join(dirname(require.resolve("supabase/package.json")), "dist", "supabase.js");
-const result = run(process.execPath, [supabaseBin, ...COMMANDS[command], "--network-id", NETWORK, ...extraArgs]);
-process.exit(result.status ?? 1);
+// 이 네트워크를 쓰기 전에 기본 네트워크로 띄운 스택이 실행 중이면 멈춘다.
+// start는 포트가 0.0.0.0에 남은 채 성공하고, reset은 DB 컨테이너만 새 네트워크로 옮겨 다른 서비스가 DB에 연결하지 못한다.
+const configPath = join(dirname(fileURLToPath(import.meta.url)), "..", "supabase", "config.toml");
+const projectId = readFileSync(configPath, "utf8").match(/^project_id\s*=\s*"([^"]+)"/m)?.[1];
+if (projectId) {
+  const db = run("docker", ["inspect", `supabase_db_${projectId}`, "--format", "{{.State.Running}} {{range $name, $_ := .NetworkSettings.Networks}}{{$name}},{{end}}"], {
+    stdio: ["ignore", "pipe", "ignore"],
+    encoding: "utf8",
+  });
+  const [running, networks = ""] = db.status === 0 ? db.stdout.trim().split(" ") : [];
+  if (running === "true" && !networks.split(",").includes(NETWORK)) {
+    const steps = command === "reset" ? "pnpm db:stop → pnpm db:start → pnpm db:reset" : "pnpm db:stop → pnpm db:start";
+    console.error(`로컬 스택이 ${NETWORK}가 아닌 네트워크(${networks.replace(/,$/, "") || "알 수 없음"})에서 실행 중이다. ${steps} 순서로 다시 실행한다.`);
+    process.exit(1);
+  }
+}
+
+runSupabase([...COMMANDS[command], "--network-id", NETWORK, ...extraArgs]);
