@@ -78,7 +78,7 @@ description: 새 테이블이나 새 화면을 추가하거나 권한 규칙을 
    - 상태와 승인 표의 9개 행, 사용자 스토리 표의 5개 열, 확인 질문 표의 5개 열, 해결 기록 표의 4개 열이 5단계의 형식과 같다.
    - 모든 `AC-xx`에 `관련 항목:` 줄과 굵게 쓴 Given, When, Then이 있다.
    - 문서에 적힌 수치가 모두 사용자 답변이나 확정된 결정에서 나왔다.
-   - [CLAUDE.md](../../../CLAUDE.md)의 문서 작성 규칙에 따라 `korean-refine` 검사기를 `--style plain`으로 실행했고 지적이 0건이다.
+   - [CLAUDE.md](../../../CLAUDE.md)의 문장 검사 규칙에 따라 `korean-refine` 검사기를 `--style plain`으로 실행했고 지적이 0건이다.
 8. **승인을 요청한다.** frontmatter의 `status`가 `review`인지 확인한 뒤, 문서 경로와 요약을 사용자에게 보여 준다. 요약에는 US, FR, NFR, AC 개수와 해결한 `Q-xx` 개수, 범위 밖 항목을 넣는다. 질문 방법은 '게이트' 절을 따른다.
 9. **승인을 반영한다.**
    - frontmatter를 `status: approved`, `updated: <오늘 날짜>`로 바꾼다.

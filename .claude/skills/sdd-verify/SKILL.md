@@ -38,7 +38,7 @@ description: Feature 이슈의 하위 Task가 병합된 뒤 요구사항의 모�
    - 닫혔지만 병합된 PR을 찾지 못한 Task는 빈틈 후보로 기록한다.
 3. **최신 `main`을 받는다.** 4번 명령을 실행한다. `git status --porcelain` 출력이 비어 있지 않으면 진행하지 않고 사용자에게 처리 방법을 묻는다.
 4. **검사를 실행한다.**
-   - 저장소 루트에서 CLAUDE.md에 적힌 typecheck, lint, test 명령을 차례로 실행한다. CLAUDE.md에 명령이 없으면 루트 `package.json`의 스크립트를 확인한다. 예: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+   - 저장소 루트에서 AGENTS.md에 적힌 typecheck, lint, test 명령을 차례로 실행한다. 예: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
    - 출력을 `tail`, `head`, `grep`으로 파이프하지 않고, 실제 출력과 종료 코드를 그대로 보관한다.
    - 실패한 검사는 그 자체로 빈틈으로 기록한다.
 5. **AC를 하나씩 대조한다.**
@@ -144,6 +144,6 @@ gh issue close <FeatureNo> --reason completed
 
 - [SDD 진행 가이드](../../../docs/sdd-guide.md): 검증 단계의 목적과 판정 기준의 배경
 - [프로젝트 헌법](../../../docs/constitution.md)
-- [CLAUDE.md](../../../CLAUDE.md): 빌드와 테스트 명령
+- [AGENTS.md](../../../AGENTS.md): 빌드와 테스트 명령
 - [ADR-0011 GitHub Issues·Projects로 업무 관리](../../../docs/decisions/0011-github-issues-projects.md)
 - 이전 단계: [sdd-implement 스킬](../sdd-implement/SKILL.md), Task 생성 형식: [sdd-tasks 스킬](../sdd-tasks/SKILL.md)

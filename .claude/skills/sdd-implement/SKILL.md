@@ -16,7 +16,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
 | Task 이슈 번호 | 스킬 인수(예: `/sdd-implement #42`) | `#42`와 `42`를 모두 받고, 앞의 `#`을 떼고 숫자만 쓴다. 인수가 없으면 사용자에게 묻는다 |
 | Task 이슈 본문 | GitHub | 상위 Feature, 관련 문서, 다루는 AC, 작업 범위, 범위 밖, 선행 Task |
 | 요구사항과 설계 | Task 본문에 적힌 `docs/specs/NNN-<kebab>/` 경로 | `status: approved`, 해당 AC와 설계 요소 |
-| 헌법과 작업 규칙 | [constitution.md](../../../docs/constitution.md), [CLAUDE.md](../../../CLAUDE.md) | 지킬 원칙, 빌드와 테스트 명령 |
+| 헌법과 작업 규칙 | [constitution.md](../../../docs/constitution.md), [AGENTS.md](../../../AGENTS.md) | 지킬 원칙, 빌드와 테스트 명령 |
 | PR 템플릿 | [pull_request_template.md](../../../.github/pull_request_template.md) | PR 본문 절 구성 |
 
 ### 명령 실행 환경
@@ -32,7 +32,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
    - `state`가 `OPEN`이 아니면 멈추고 사용자에게 알린다.
    - 본문의 절 제목(상위 Feature, 관련 문서, 다루는 수용 기준, 작업 범위, 범위 밖, 선행 Task)으로 각 값을 읽는다. 절 이름과 순서는 [task.yml](../../../.github/ISSUE_TEMPLATE/task.yml)과 같다.
    - 선행 Task 절이 `없음`이면 다음 단계로 넘어간다. 번호가 있으면 선행 Task마다 2번 명령으로 상태를 확인한다. `CLOSED`가 아닌 선행 Task가 있으면 멈추고, 어떤 Task를 먼저 끝내야 하는지 사용자에게 알린다.
-2. **관련 문서를 읽는다.** 요구사항에서 해당 AC를, 설계에서 Task가 쓰는 다이어그램과 RLS 정책 행을 읽는다. 두 문서의 `status`가 `approved`가 아니면 멈춘다. 헌법과 CLAUDE.md도 함께 읽는다.
+2. **관련 문서를 읽는다.** 요구사항에서 해당 AC를, 설계에서 Task가 쓰는 다이어그램과 RLS 정책 행을 읽는다. 두 문서의 `status`가 `approved`가 아니면 멈춘다. 헌법과 AGENTS.md도 함께 읽는다.
 3. **브랜치를 만든다.** 3번 명령을 차례로 실행한다.
    - `git status --porcelain` 출력이 비어 있지 않으면 진행하지 않고, 남은 변경을 어떻게 처리할지 사용자에게 묻는다.
    - 브랜치 이름은 `feat/<이슈번호>-<slug>`다. slug는 이슈 제목을 짧은 영어 kebab-case로 줄인 값이다.
@@ -59,7 +59,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
    - 상위 문서가 다시 승인되면 `/sdd-tasks`로 영향받는 Task를 갱신한 뒤 이 스킬을 다시 실행한다.
    - 작업이 Task 범위보다 커져 200줄을 크게 넘을 것으로 보이면, 범위를 줄이고 남은 작업은 새 Task로 나누자고 제안한다.
 8. **검사를 실행한다.**
-   - 저장소 루트에서 CLAUDE.md에 적힌 typecheck, lint, test 명령을 차례로 실행한다. CLAUDE.md에 아직 명령이 없으면 루트 `package.json`의 스크립트를 확인한다. 예: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+   - 저장소 루트에서 AGENTS.md에 적힌 typecheck, lint, test 명령을 차례로 실행한다. 예: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
    - 출력을 `tail`, `head`, `grep`으로 파이프하지 않는다. 파이프를 거치면 실패 종료 코드가 가려질 수 있다.
    - 세 명령이 모두 종료 코드 0으로 끝날 때까지 고치고 다시 실행한다.
    - 각 명령의 실제 출력과 종료 코드를 그대로 보관한다. 출력 없이 통과했다고 보고하지 않는다.
@@ -81,9 +81,11 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
       - 저장소 문서 링크는 PR 화면에서 열리도록 `https://github.com/god3v/hamtteukka/blob/main/...` 절대 주소로 쓴다.
       - 검사 출력에 로컬 경로가 있으면 `<repo>`로 바꾼다.
     - 6번 명령으로 PR을 만든다. PR 제목은 `<type>: <한국어 요약>`처럼 Conventional Commits 접두어와 한국어 요약으로 쓴다.
+    - 7번 명령으로 CodeRabbit 리뷰를 요청한다. 별이 10개 미만인 공개 저장소에서는 CodeRabbit이 자동으로 리뷰하지 않는다.
 11. **보고하고 리뷰를 기다린다.**
     - PR URL, 각 검사 명령의 실제 출력 마지막 부분과 종료 코드, 리뷰 포인트를 사용자에게 보고한다.
-    - 리뷰 의견을 받으면 같은 브랜치에서 고치고 8단계부터 다시 진행한다.
+    - 사용자나 CodeRabbit의 리뷰 의견을 받으면 근거를 확인한 뒤 같은 브랜치에서 고치고 8단계부터 다시 진행한다.
+    - 반영하지 않는 CodeRabbit 지적에는 이유를 답글로 남긴다.
 
 ### 명령 모음
 
@@ -113,6 +115,9 @@ git push -u origin feat/<n>-<slug>
 
 # 6. PR을 만든다
 gh pr create --base main --head feat/<n>-<slug> --title "<type>: <한국어 요약>" --body-file <tmp>
+
+# 7. CodeRabbit 리뷰를 요청한다
+gh pr comment <prNo> --body "@coderabbitai review"
 ```
 
 ## 산출물
@@ -149,7 +154,7 @@ PR은 사용자가 리뷰하고 병합한다. 이 스킬은 PR을 열고 보고�
 
 - [SDD 진행 가이드](../../../docs/sdd-guide.md): 구현 단계 규칙과 상위 문서를 먼저 고치는 이유
 - [프로젝트 헌법](../../../docs/constitution.md)
-- [CLAUDE.md](../../../CLAUDE.md): 저장소 구조, 빌드와 테스트 명령, 브랜치 규칙
+- [AGENTS.md](../../../AGENTS.md): 저장소 구조, 빌드와 테스트 명령, 브랜치와 PR 규칙
 - [PR 템플릿](../../../.github/pull_request_template.md)
 - [ADR-0003 Supabase 접근을 packages/shared로 제한](../../../docs/decisions/0003-data-access-boundary.md)
 - [ADR-0004 RLS를 1차 권한 검사로 사용](../../../docs/decisions/0004-rls-authorization.md)

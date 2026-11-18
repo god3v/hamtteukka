@@ -24,12 +24,15 @@ hamtteukka/
 │   └── migrations/       public 스키마 SQL 마이그레이션과 RLS 정책
 ├── docs/                 제품, 설계, 결정, 조사 문서
 ├── .github/              이슈 양식, PR 템플릿 (CI 워크플로는 R0에서 추가)
-├── .claude/skills/       SDD 단계별 프로젝트 스킬
-├── CLAUDE.md
+├── .claude/              SDD 단계별 프로젝트 스킬과 Claude Code 훅
+├── scripts/              저장소 검사 스크립트
+├── .coderabbit.yaml      CodeRabbit PR 리뷰 설정
+├── AGENTS.md             사람과 코딩 에이전트가 함께 따르는 작업 규칙
+├── CLAUDE.md             Claude Code 진입점 (AGENTS.md를 가져온다)
 └── README.md
 ```
 
-TypeScript 쪽 패키지는 pnpm workspaces와 Turborepo로 묶는다. 워크스페이스는 루트의 `pnpm-workspace.yaml`이 정하고, 패키지 사이의 작업 순서(build, typecheck, lint, test, dev)는 루트의 `turbo.json`이 정한다. 실행 명령과 도구 버전은 [CLAUDE.md](../../CLAUDE.md)의 명령 절에 있다.
+TypeScript 쪽 패키지는 pnpm workspaces와 Turborepo로 묶는다. 워크스페이스는 루트의 `pnpm-workspace.yaml`이 정하고, 패키지 사이의 작업 순서(build, typecheck, lint, test, dev)는 루트의 `turbo.json`이 정한다. 실행 명령과 도구 버전은 [AGENTS.md](../../AGENTS.md)의 명령 절에 있다.
 
 ### 나중에 추가하는 구조
 
