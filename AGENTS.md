@@ -34,7 +34,7 @@
 
 | 도구 | 버전 | 비고 |
 |---|---|---|
-| Node.js | 24 이상 | 루트 `package.json`의 `engines` |
+| Node.js | 24.x | `package.json`의 `engines`. Vercel 배포도 같은 버전을 쓴다 |
 | pnpm | 12.21.0 | 루트 `package.json`의 `packageManager` |
 | Next.js / React | 16.4.6 / 19.3.1 | |
 | TypeScript | 6.0.3 | typescript-eslint 8.73.0이 6.1 미만만 지원한다 |

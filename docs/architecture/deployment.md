@@ -52,6 +52,24 @@ flowchart LR
 
 Vercel 함수의 기본 리전은 iad1이므로 production 함수 리전을 icn1로 명시해야 한다([Vercel icn1 문서](https://vercel.com/docs/pricing/regional-pricing/icn1)). Supabase Free 플랜은 활성 프로젝트를 2개까지 허용한다([Supabase 요금](https://supabase.com/pricing)). 따라서 preview 전용 Supabase 프로젝트를 둘지는 이 한도를 함께 고려해 정한다.
 
+## Vercel 프로젝트 설정
+
+R0 작업 [#4](https://github.com/god3v/hamtteukka/issues/4)에서 아래와 같이 정했다. 저장소에 둘 수 있는 설정은 파일로 관리하고, 나머지는 Vercel 프로젝트 설정 화면에서 지정한다.
+
+| 항목 | 값 | 설정 위치 |
+|---|---|---|
+| Root Directory | `apps/web` | Vercel 프로젝트 설정 |
+| Framework Preset | Next.js | Vercel 프로젝트 설정(자동 감지) |
+| Install Command, Build Command | 기본값 | Vercel 프로젝트 설정. pnpm이 루트의 `pnpm-lock.yaml`로 워크스페이스 전체를 설치한다 |
+| Root Directory 밖 파일 포함 | 켬(기본값) | Vercel 프로젝트 설정. `packages/shared`와 루트 lockfile을 쓰기 때문에 반드시 켠다 |
+| Node.js 버전 | 24.x | `apps/web/package.json`의 `engines.node`. Vercel은 Root Directory의 package.json을 읽는다 |
+| pnpm 버전 | 12.21.0 | 루트 `package.json`의 `packageManager` |
+| 함수 리전 | icn1(서울) | `apps/web/vercel.json`의 `regions` |
+
+함수 리전은 `/api/health` 응답의 `region` 값으로 확인한다. 홈 화면 같은 정적 페이지는 CDN이 응답하므로 함수 리전 설정의 영향을 받지 않는다([Vercel 함수 리전 문서](https://vercel.com/docs/functions/configuring-functions/region)).
+
+Vercel 신규 프로젝트의 Node.js 기본값은 26.x이므로 버전을 명시하지 않으면 로컬과 다른 버전으로 빌드된다([Vercel Node.js 버전 문서](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)). 빌드 로그에서 pnpm 12가 선택되지 않으면 Vercel 환경 변수 `ENABLE_EXPERIMENTAL_COREPACK=1`을 추가해 `packageManager` 버전을 쓰게 한다([Vercel 빌드 설정 문서](https://vercel.com/docs/builds/configure-a-build)).
+
 ## R0에서 확정할 항목
 
 아래 항목은 방향만 정했고 구체적인 방식은 아직 정하지 않았다. R0 인프라 Task에서 정하고, 정한 내용을 이 문서에 반영한다.
@@ -62,7 +80,6 @@ Vercel 함수의 기본 리전은 iad1이므로 production 함수 리전을 icn1
 | 병합 조건 | 소유자가 PR을 리뷰한 뒤 main에 병합한다 | CI 통과를 병합 조건으로 강제하는 브랜치 보호 설정 |
 | 마이그레이션 적용 | supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다 | 적용 시점과 주체(로컬 실행 또는 CI 작업), 실패 시 처리 |
 | preview 데이터 | PR마다 Vercel preview를 만든다 | preview가 연결할 Supabase 프로젝트와 테스트 데이터 |
-| 함수 리전 지정 | production 함수 리전은 icn1이다 | 리전을 지정하는 설정 파일과 위치 |
 | 환경 변수 | 환경마다 Supabase 접속 정보가 다르다 | 변수 이름, 보관 위치, 로컬 예시 파일 |
 | OAuth 리디렉션 | 카카오·구글 로그인을 쓴다 | 환경별 리디렉션 URL 등록과 로컬 스택의 소셜 로그인 확인 방법 |
 
