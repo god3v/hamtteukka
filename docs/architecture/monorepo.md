@@ -12,7 +12,7 @@ updated: 2026-11-18
 
 ### R0에서 만드는 구조
 
-apps/web과 packages/shared는 R0 작업 [#2](https://github.com/god3v/hamtteukka/issues/2)에서 만들었고, supabase/는 R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 만든다.
+apps/web과 packages/shared는 R0 작업 [#2](https://github.com/god3v/hamtteukka/issues/2)에서 만들었고, supabase/는 R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 만들었다.
 
 ```text
 hamtteukka/

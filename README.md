@@ -48,14 +48,16 @@
 
 ## 시작하기
 
-Node.js 24.x와 pnpm 12가 필요하다. pnpm 버전은 루트 `package.json`의 `packageManager` 필드를 따른다.
+Node.js 24.x, pnpm 12, Docker가 필요하다. pnpm 버전은 루트 `package.json`의 `packageManager` 필드를 따른다. Docker는 Supabase 로컬 스택을 실행하는 데 쓴다.
 
 ```bash
 pnpm install
+pnpm db:start
+cp .env.example apps/web/.env.local
 pnpm dev
 ```
 
-개발 서버는 http://localhost:3000 에서 열린다. Supabase 로컬 환경과 `.env.example`은 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 추가한다.
+`pnpm db:start`는 처음 실행할 때 Docker 이미지를 내려받으므로 몇 분이 걸린다. `apps/web/.env.local`에는 `pnpm db:status`가 출력하는 `API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` 값을 채운다. 개발 서버는 http://localhost:3000 에서, Supabase Studio는 http://127.0.0.1:54323 에서 열린다.
 
 | 명령 | 하는 일 |
 |---|---|
@@ -64,6 +66,9 @@ pnpm dev
 | `pnpm typecheck` | 타입 검사 |
 | `pnpm lint` | ESLint 검사 |
 | `pnpm test` | Vitest 테스트 |
+| `pnpm db:start`, `pnpm db:stop` | Supabase 로컬 스택 시작과 종료 |
+| `pnpm db:status` | 로컬 스택의 주소와 키 출력 |
+| `pnpm db:reset` | 로컬 DB를 비우고 마이그레이션을 처음부터 다시 적용 |
 | `node scripts/check-docs.mjs` | `docs/` 문서 구조 검사 |
 
 ## 프로젝트 구조
@@ -71,7 +76,7 @@ pnpm dev
 ```
 apps/web/          Next.js 웹 앱
 packages/shared/   zod DTO, 데이터 접근 함수, 공통 로직
-supabase/          마이그레이션과 로컬 설정 (R0에서 추가)
+supabase/          마이그레이션과 로컬 설정
 docs/              제품, 결정, 아키텍처, 기능 명세 문서
 scripts/           저장소 검사 스크립트
 .claude/           Claude Code 스킬과 훅

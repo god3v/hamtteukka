@@ -26,6 +26,9 @@
 | `pnpm typecheck` | 타입 검사 (`apps/web`은 `next typegen` 뒤 `tsc --noEmit`) |
 | `pnpm lint` | ESLint 검사 |
 | `pnpm test` | Vitest 테스트 |
+| `pnpm db:start`, `pnpm db:stop` | Supabase 로컬 스택 시작과 종료 (Docker 필요) |
+| `pnpm db:status` | 로컬 스택의 주소와 키 출력 |
+| `pnpm db:reset` | 로컬 DB를 비우고 `supabase/migrations`를 처음부터 다시 적용 |
 | `node scripts/check-docs.mjs` | `docs/` 문서의 frontmatter, 제목, 리드, Mermaid 유형 검사 |
 
 특정 패키지만 실행하려면 `pnpm --filter @hamtteukka/shared test`처럼 `--filter`를 붙인다.
@@ -40,6 +43,7 @@
 | TypeScript | 6.0.3 | typescript-eslint 8.73.0이 6.1 미만만 지원한다 |
 | ESLint | 9.39.5 | eslint-config-next가 쓰는 react, import, jsx-a11y 플러그인이 ESLint 10을 지원하지 않는다 |
 | zod / Vitest / Turborepo | 4.6.7 / 5.1.0 / 2.11.11 | |
+| Supabase CLI | 3.1.0 | 루트 `devDependencies`의 `supabase`. `pnpm exec supabase`로 실행한다 |
 
 - 의존성은 범위 지정자 없이 정확한 버전으로 적는다(`.npmrc`의 `save-exact=true`, 헌법 P-14).
 - pnpm은 배포된 지 얼마 되지 않은 버전의 설치를 거부한다. 이 경우 `minimumReleaseAgeExclude` 예외를 추가하지 않고, 기간이 지난 이전 버전을 고른다.
@@ -50,7 +54,7 @@
 ```
 apps/web/          Next.js 웹 앱 (@hamtteukka/web)
 packages/shared/   데이터 접근 함수, zod DTO, 공통 로직 (@hamtteukka/shared)
-supabase/          마이그레이션과 로컬 설정 (R0 #3에서 생성)
+supabase/          마이그레이션과 로컬 설정
 docs/              제품, 결정, 조사, 명세 문서
 scripts/           저장소 검사 스크립트
 .claude/           Claude Code 스킬(SDD 절차)과 훅
