@@ -50,4 +50,6 @@ desktop.ini
 # .claude/settings.json, .claude/skills/ and .claude/hooks/ are shared and committed.
 .claude/settings.local.json
 .claude/worktrees/
+.claude/launch.json
 CLAUDE.local.md
+.serena/
