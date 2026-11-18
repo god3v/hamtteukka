@@ -1,5 +1,6 @@
 // PreToolUse hook: denies file edits and shell commands that break the rules in AGENTS.md.
 
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { locate, readHookInput } from "./hook-utils.mjs";
@@ -66,9 +67,59 @@ function checkCommand() {
     deny("git 훅을 --no-verify로 건너뛰지 않는다. 훅이 지적한 원인을 고친다.");
   }
 
-  if (/\bgit\s+push\b[^\n;&|]*?[\s:+](?:main|master|dev)(?=$|[\s;&|])/.test(command)) {
-    deny("main과 dev에 직접 푸시하지 않는다. 작업 브랜치를 푸시하고 PR로 병합한다 (ADR-0013).");
+  for (const segment of command.split(/&&|\|\||;|\||\r?\n/)) {
+    const target = protectedPushTarget(segment);
+    if (target) {
+      deny(`${target}에 직접 푸시하지 않는다. 작업 브랜치를 푸시하고 PR로 병합한다 (ADR-0013).`);
+    }
   }
+}
+
+const PROTECTED_BRANCHES = new Set(["main", "master", "dev"]);
+// git push 옵션 가운데 다음 인수를 값으로 받는 것.
+const PUSH_OPTIONS_WITH_VALUE = new Set(["-o", "--push-option", "--repo", "--receive-pack", "--exec"]);
+
+function currentBranch(dir) {
+  try {
+    return execFileSync("git", ["branch", "--show-current"], { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return "";
+  }
+}
+
+// git push 명령 한 토막이 보호 브랜치를 갱신하면 그 브랜치 이름을, 아니면 빈 문자열을 돌려준다.
+// 명시한 refspec(`HEAD:refs/heads/dev`, `+dev`, `:dev`)과 대상을 생략한 `git push`(현재 브랜치를 푸시)를 모두 확인한다.
+function protectedPushTarget(segment) {
+  const tokens = segment.trim().split(/\s+/).map((token) => token.replace(/^["']|["']$/g, ""));
+  const gitIndex = tokens.indexOf("git");
+  if (gitIndex === -1) return "";
+
+  let dir = input.cwd ?? process.cwd();
+  let i = gitIndex + 1;
+  for (; i < tokens.length && tokens[i] !== "push"; i += 1) {
+    if (tokens[i] === "-C" && tokens[i + 1]) dir = path.resolve(dir, tokens[(i += 1)]);
+    else if (!tokens[i].startsWith("-")) return "";
+  }
+  if (tokens[i] !== "push") return "";
+
+  const positional = [];
+  for (i += 1; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (token === "--all" || token === "--mirror" || token === "--branches") return "모든 브랜치(dev, main 포함)";
+    if (PUSH_OPTIONS_WITH_VALUE.has(token)) i += 1;
+    else if (!token.startsWith("-")) positional.push(token);
+  }
+
+  const refspecs = positional.slice(1);
+  if (refspecs.length === 0) refspecs.push("HEAD");
+  for (const refspec of refspecs) {
+    const spec = refspec.replace(/^\+/, "");
+    let destination = spec.includes(":") ? spec.slice(spec.indexOf(":") + 1) : spec;
+    if (destination === "HEAD" || destination === "@") destination = currentBranch(dir);
+    destination = destination.replace(/^refs\/heads\//, "");
+    if (PROTECTED_BRANCHES.has(destination)) return destination;
+  }
+  return "";
 }
 
 if (["Edit", "Write", "MultiEdit", "NotebookEdit"].includes(tool)) checkFileEdit();

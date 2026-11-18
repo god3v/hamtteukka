@@ -31,7 +31,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
 1. **Task 이슈를 읽는다.** '명령 모음'의 1번 명령으로 이슈를 읽는다.
    - `state`가 `OPEN`이 아니면 멈추고 사용자에게 알린다.
    - 본문의 절 제목(상위 Feature, 관련 문서, 다루는 수용 기준, 작업 범위, 범위 밖, 선행 Task)으로 각 값을 읽는다. 절 이름과 순서는 [task.yml](../../../.github/ISSUE_TEMPLATE/task.yml)과 같다.
-   - 선행 Task 절이 `없음`이면 다음 단계로 넘어간다. 번호가 있으면 선행 Task마다 2번 명령으로 상태를 확인한다. `CLOSED`도 아니고 Project의 Status가 `dev 반영`도 아닌 선행 Task가 있으면 멈추고, 어떤 Task를 먼저 끝내야 하는지 사용자에게 알린다.
+   - 선행 Task 절이 `없음`이면 다음 단계로 넘어간다. 번호가 있으면 선행 Task마다 2번 명령으로 이슈 상태와 Project의 Status를 함께 확인한다. `CLOSED`도 아니고 Project의 Status가 `dev 반영`도 아닌 선행 Task가 있으면 멈추고, 어떤 Task를 먼저 끝내야 하는지 사용자에게 알린다.
 2. **관련 문서를 읽는다.** 요구사항에서 해당 AC를, 설계에서 Task가 쓰는 다이어그램과 RLS 정책 행을 읽는다. 두 문서의 `status`가 `approved`가 아니면 멈춘다. 헌법과 AGENTS.md도 함께 읽는다.
 3. **브랜치를 만든다.** 3번 명령을 차례로 실행한다.
    - `git status --porcelain` 출력이 비어 있지 않으면 진행하지 않고, 남은 변경을 어떻게 처리할지 사용자에게 묻는다.
@@ -80,7 +80,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
       - 굵은 글씨 라벨을 항목마다 붙이지 않는다. 강조는 꼭 필요한 곳에만 쓴다.
       - 전문 용어나 도구 이름은 처음 나올 때 무엇인지 짧게 풀어 쓴다. 예: "린트 도구(typescript-eslint)".
       - 이유를 설명할 때는 "~하기 때문입니다"처럼 문장으로 잇고, 괄호 안에 긴 설명을 넣지 않는다.
-      - 저장소 문서 링크는 PR 화면에서 열리도록 `https://github.com/god3v/hamtteukka/blob/dev/...` 절대 주소로 쓴다. 이번 작업에서 추가한 문서는 아직 `main`에 없기 때문이다.
+      - 저장소 문서 링크는 PR 화면에서 열리도록 절대 주소로 쓴다. 이미 `dev`에 있는 문서는 `https://github.com/god3v/hamtteukka/blob/dev/...`로, 이 PR에서 새로 추가한 문서는 병합 전에도 열리도록 `https://github.com/god3v/hamtteukka/blob/<작업 브랜치>/...`로 쓴다.
       - 검사 출력에 로컬 경로가 있으면 `<repo>`로 바꾼다.
     - PR 제목은 `<type>: <한국어 요약>`처럼 Conventional Commits 접두어와 한국어 요약으로 쓴다.
     - PR을 만들기 전에 제목과 본문 전체를 사용자에게 보여 주고 승인을 받는다. 사용자가 고친 이름과 문장을 그대로 쓴다. 이미 연 PR의 제목이나 본문을 고칠 때도 같다.
@@ -90,7 +90,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
     - PR URL, 각 검사 명령의 실제 출력 마지막 부분과 종료 코드, 리뷰 포인트를 사용자에게 보고한다.
     - 사용자나 CodeRabbit의 리뷰 의견을 받으면 근거를 확인한 뒤 같은 브랜치에서 고치고 8단계부터 다시 진행한다.
     - 반영하지 않는 CodeRabbit 지적에는 이유를 답글로 남긴다.
-    - 사용자가 PR을 `dev`에 병합했다고 알리면 4번 명령 묶음으로 Task 항목의 `Status`를 `dev 반영`으로 바꾼다. 이슈는 `main` 릴리스 때 닫힌다 ([ADR-0013](../../../docs/decisions/0013-dev-main-branch-flow.md)).
+    - 사용자가 PR을 `dev`에 병합했다고 알리면 1번 명령으로 Task 이슈가 아직 열려 있는지 확인한다. 열려 있으면 4번 명령 묶음으로 `Status`를 `dev 반영`으로 바꾸고, 이미 닫혀 `Done`이면 그대로 둔다. 이슈는 `main` 릴리스 때 닫힌다 ([ADR-0013](../../../docs/decisions/0013-dev-main-branch-flow.md)).
 
 ### 명령 모음
 
@@ -100,8 +100,9 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
 # 1. Task 이슈를 읽는다
 gh issue view <n> --json number,title,body,state,labels,milestone
 
-# 2. 선행 Task의 상태를 확인한다
+# 2. 선행 Task의 이슈 상태와 Project Status를 확인한다
 gh issue view <m> --json state --jq .state
+gh project item-list <projectNo> --owner @me --format json --limit 500 --jq '.items[] | select(.content.number == <m>) | .status'
 
 # 3. dev에서 브랜치를 만든다
 git status --porcelain
