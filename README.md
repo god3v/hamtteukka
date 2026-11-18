@@ -37,7 +37,7 @@
 
 | 영역 | 기술 |
 |---|---|
-| 웹 | Next.js 16 (App Router), React 19, TypeScript |
+| 웹 | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4 |
 | 데이터·인증·파일 | Supabase (Postgres, Auth, Storage, RLS) |
 | 공통 로직 | `packages/shared`: zod DTO와 데이터 접근 함수 |
 | 배포 | Vercel 서울 리전(icn1), Supabase 서울 리전(ap-northeast-2) |

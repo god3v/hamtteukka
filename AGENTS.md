@@ -25,7 +25,7 @@
 | `pnpm build` | 프로덕션 빌드 |
 | `pnpm typecheck` | 타입 검사 (`apps/web`은 `next typegen` 뒤 `tsc --noEmit`) |
 | `pnpm lint` | ESLint 검사 |
-| `pnpm test` | Vitest 테스트 |
+| `pnpm test` | 테스트. `packages/shared`는 Vitest, `apps/web`은 Node 내장 테스트 러너(`node --test`)로 실행한다 |
 | `pnpm db:start`, `pnpm db:stop` | Supabase 로컬 스택 시작과 종료 (Docker 필요) |
 | `pnpm db:status` | 로컬 스택의 주소와 키 출력 |
 | `pnpm db:reset` | 로컬 DB를 비우고 `supabase/migrations`를 처음부터 다시 적용 |
@@ -40,6 +40,7 @@
 | Node.js | 24.x | `package.json`의 `engines`. Vercel 배포도 같은 버전을 쓴다 |
 | pnpm | 12.21.0 | 루트 `package.json`의 `packageManager` |
 | Next.js / React | 16.4.6 / 19.3.1 | |
+| Tailwind CSS | 4.3.4 | `apps/web`의 스타일. 기본 팔레트를 꺼 두었으므로 색은 `globals.css`의 토큰(`bg-canvas`, `text-ink` 등)으로만 쓰고 `dark:`로 색을 바꾸지 않는다. Tailwind 4 기준 지원 브라우저는 Safari 16.4, Chrome 111 이상이다 |
 | TypeScript | 6.0.3 | typescript-eslint 8.73.0이 6.1 미만만 지원한다 |
 | ESLint | 9.39.5 | eslint-config-next가 쓰는 react, import, jsx-a11y 플러그인이 ESLint 10을 지원하지 않는다 |
 | zod / Vitest / Turborepo | 4.6.7 / 5.1.0 / 2.11.11 | |

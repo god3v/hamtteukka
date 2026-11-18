@@ -1,10 +1,88 @@
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
+@import "tailwindcss";
+
+/*
+ * dark: 변형은 <html data-theme="dark">에서만 동작하고, JavaScript가 꺼진 환경의 대체 규칙(아래 media 블록)은 따르지 않는다.
+ * 그래서 색은 dark:로 바꾸지 말고 아래 토큰만 쓴다. 토큰은 두 경로 모두에서 바뀐다.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * 색상 토큰. 컴포넌트는 색을 직접 쓰지 않고 아래 이름(bg-canvas, text-ink 등)만 쓴다.
+ * 따뜻한 뉴트럴 바탕에 테라코타 포인트를 쓴다. 본문 글자와 바탕은 WCAG AA(4.5:1) 이상이 되게 고른다.
+ */
+:root {
+  --hm-canvas: #faf6f0;
+  --hm-surface: #fffdf9;
+  --hm-ink: #2b2420;
+  --hm-muted: #6b5e55;
+  --hm-line: #e6dccf;
+  --hm-accent: #a8502f;
+  --hm-accent-strong: #8c3f22;
+  --hm-on-accent: #ffffff;
+  --hm-focus: #a8502f;
 }
 
-main {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+[data-theme="dark"] {
+  --hm-canvas: #1c1917;
+  --hm-surface: #26211e;
+  --hm-ink: #f3ece4;
+  --hm-muted: #b0a194;
+  --hm-line: #3a322d;
+  --hm-accent: #e58a68;
+  --hm-accent-strong: #f0a487;
+  --hm-on-accent: #1c1917;
+  --hm-focus: #f0a487;
+}
+
+/* 스크립트가 실행되지 않아 data-theme이 없으면 기기 설정을 따른다. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --hm-canvas: #1c1917;
+    --hm-surface: #26211e;
+    --hm-ink: #f3ece4;
+    --hm-muted: #b0a194;
+    --hm-line: #3a322d;
+    --hm-accent: #e58a68;
+    --hm-accent-strong: #f0a487;
+    --hm-on-accent: #1c1917;
+    --hm-focus: #f0a487;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  /* Tailwind 기본 팔레트(bg-red-500 등)를 끄고 아래 토큰만 쓰게 한다. */
+  --color-*: initial;
+  --color-canvas: var(--hm-canvas);
+  --color-surface: var(--hm-surface);
+  --color-ink: var(--hm-ink);
+  --color-muted: var(--hm-muted);
+  --color-line: var(--hm-line);
+  --color-accent: var(--hm-accent);
+  --color-accent-strong: var(--hm-accent-strong);
+  --color-on-accent: var(--hm-on-accent);
+  --color-focus: var(--hm-focus);
+  --font-sans: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* 고정 머리글(h-14) 밑으로 앵커 대상이 가리지 않게 한다. */
+    scroll-padding-top: 4rem;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
 }
