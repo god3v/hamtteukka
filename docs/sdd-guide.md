@@ -77,7 +77,7 @@ flowchart TD
 | 게이트 1 | `/sdd-spec` | 열린 확인 질문이 없는 requirements.md | status가 approved로 바뀐다 |
 | 게이트 2 | `/sdd-design` | design/ 문서와 헌법 점검 결과 | 설계 문서가 approved로 바뀐다 |
 | 게이트 3 | `/sdd-tasks` | Task 목록과 일관성 분석 결과 | Task 이슈가 만들어진다 |
-| 게이트 4 | `/sdd-implement` | PR 변경 내용과 검사 결과 | PR이 병합되고 Task 이슈가 닫힌다 |
+| 게이트 4 | `/sdd-implement` | PR 변경 내용과 검사 결과 | PR이 `dev`에 병합된다. Task 이슈는 `main` 릴리스 때 닫힌다 |
 
 ## SDD 적용 기준
 
@@ -217,7 +217,7 @@ flowchart LR
   Des -->|"sdd-tasks가 분해"| TaskIssue
   Feat -->|"하위 이슈로 연결"| TaskIssue
   TaskIssue -->|"Task 1개와 PR 1개"| PRs
-  PRs -->|"병합하면 Closes로 종료"| TaskIssue
+  PRs -->|"main 릴리스 때 Closes로 종료"| TaskIssue
   MS -->|"릴리스로 묶음"| Feat
   MS -->|"같은 마일스톤"| TaskIssue
   Feat -->|"단계가 바뀔 때 값 갱신"| Field
@@ -230,14 +230,14 @@ flowchart LR
 | `/sdd-spec` | requirements.md | Feature 이슈 생성, 마일스톤과 Project 연결 | 요구사항 |
 | `/sdd-design` | design/ 문서, architecture 문서 갱신 | 없음 | 설계 |
 | `/sdd-tasks` | 없음 | Task 이슈 생성, 분석 요약 댓글 | 작업 분해, 이슈를 만든 뒤 구현 |
-| `/sdd-implement` | 코드와 테스트 | 브랜치와 PR 생성, 병합하면 Task 종료 | 구현 |
+| `/sdd-implement` | 코드와 테스트 | 브랜치와 PR 생성, `dev` 병합 뒤 Status `dev 반영`, `main` 릴리스 때 Task 종료 | 구현 |
 | `/sdd-verify` | 없음 | 차이를 메우는 Task 생성, 또는 Feature 종료 | 검증 |
 
 Task 항목의 SDD 단계는 그 Task가 하는 일의 단계로 둔다. 요구사항 검토 Task는 요구사항이고, `/sdd-tasks`가 만든 구현 Task는 구현이다. 필드 값은 웹 화면에서 바꾸거나 `gh project item-edit`로 바꾸며, CLI를 쓸 때는 `gh project field-list`로 필드 ID와 옵션 ID를 먼저 조회한다([gh 매뉴얼](https://cli.github.com/manual/gh_project_item-edit)).
 
 Project의 다른 필드는 다음과 같이 쓴다.
 
-- **Status**: 기본값 Todo, In Progress, Done을 쓴다. Project의 기본 워크플로는 이슈가 닫히거나 PR이 병합되면 항목을 Done으로 옮긴다([GitHub 문서](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-built-in-automations)).
+- **Status**: Todo, In Progress, dev 반영, Done을 쓴다. `dev 반영`은 PR이 `dev`에 병합되어 `main` 릴리스를 기다리는 상태다([ADR-0013](decisions/0013-dev-main-branch-flow.md)). Project의 기본 워크플로는 이슈가 닫히면 항목을 Done으로 옮긴다([GitHub 문서](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-built-in-automations)).
 - **Size**: `/sdd-tasks`가 Task마다 S, M, L, XL 가운데 하나를 제안하고, 사용자가 확인한 값으로 설정한다. `/sdd-verify`가 만드는 빈틈 Task도 같다.
 - **Iteration**: 1주 단위다. 이 흐름의 스킬은 Iteration을 자동으로 정하지 않는다.
 
