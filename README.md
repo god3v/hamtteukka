@@ -48,7 +48,7 @@
 
 ## 시작하기
 
-Node.js 24 이상과 pnpm 12가 필요하다. pnpm 버전은 루트 `package.json`의 `packageManager` 필드를 따른다.
+Node.js 24.x와 pnpm 12가 필요하다. pnpm 버전은 루트 `package.json`의 `packageManager` 필드를 따른다.
 
 ```bash
 pnpm install
