@@ -80,7 +80,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
       - 굵은 글씨 라벨을 항목마다 붙이지 않는다. 강조는 꼭 필요한 곳에만 쓴다.
       - 전문 용어나 도구 이름은 처음 나올 때 무엇인지 짧게 풀어 쓴다. 예: "린트 도구(typescript-eslint)".
       - 이유를 설명할 때는 "~하기 때문입니다"처럼 문장으로 잇고, 괄호 안에 긴 설명을 넣지 않는다.
-      - 저장소 문서 링크는 PR 화면에서 열리도록 절대 주소로 쓴다. 이미 `dev`에 있는 문서는 `https://github.com/god3v/hamtteukka/blob/dev/...`로, 이 PR에서 새로 추가한 문서는 병합 전에도 열리도록 `https://github.com/god3v/hamtteukka/blob/<작업 브랜치>/...`로 쓴다.
+      - 저장소 문서 링크는 PR 화면에서 열리도록 절대 주소로 쓴다. 이 PR에서 바꾸지 않은 문서는 `https://github.com/god3v/hamtteukka/blob/dev/...`로, 이 PR에서 새로 추가하거나 고친 문서는 리뷰어가 변경본을 볼 수 있도록 `https://github.com/god3v/hamtteukka/blob/<작업 브랜치>/...`로 쓴다.
       - 검사 출력에 로컬 경로가 있으면 `<repo>`로 바꾼다.
     - PR 제목은 `<type>: <한국어 요약>`처럼 Conventional Commits 접두어와 한국어 요약으로 쓴다.
     - PR을 만들기 전에 제목과 본문 전체를 사용자에게 보여 주고 승인을 받는다. 사용자가 고친 이름과 문장을 그대로 쓴다. 이미 연 PR의 제목이나 본문을 고칠 때도 같다.
@@ -90,7 +90,7 @@ PR이 병합되면 PR 본문의 `Closes #<번호>`가 Task 이슈를 닫고, Pro
     - PR URL, 각 검사 명령의 실제 출력 마지막 부분과 종료 코드, 리뷰 포인트를 사용자에게 보고한다.
     - 사용자나 CodeRabbit의 리뷰 의견을 받으면 근거를 확인한 뒤 같은 브랜치에서 고치고 8단계부터 다시 진행한다.
     - 반영하지 않는 CodeRabbit 지적에는 이유를 답글로 남긴다.
-    - 사용자가 PR을 `dev`에 병합했다고 알리면 1번 명령으로 Task 이슈가 아직 열려 있는지 확인한다. 열려 있으면 4번 명령 묶음으로 `Status`를 `dev 반영`으로 바꾸고, 이미 닫혀 `Done`이면 그대로 둔다. 이슈는 `main` 릴리스 때 닫힌다 ([ADR-0013](../../../docs/decisions/0013-dev-main-branch-flow.md)).
+    - 사용자가 PR을 `dev`에 병합했다고 알리면 1번 명령으로 Task 이슈가 아직 열려 있는지 확인한다. 열려 있으면 4번 명령 묶음으로 `Status`를 `dev 반영`으로 바꾼다. 이미 닫혀 있으면 이 PR의 병합 커밋이 `main`에 있는지(`git merge-base --is-ancestor <병합 커밋> origin/main`) 확인해, 있으면 그대로 두고 없으면 이슈를 다시 열어 `dev 반영`으로 바꾼다. 이슈는 `main` 릴리스 때 닫힌다 ([ADR-0013](../../../docs/decisions/0013-dev-main-branch-flow.md)).
 
 ### 명령 모음
 
