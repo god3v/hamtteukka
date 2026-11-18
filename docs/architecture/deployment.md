@@ -46,7 +46,7 @@ flowchart LR
 
 | 환경 | 웹 실행 위치 | Supabase | 용도 | 확정 상태 |
 |---|---|---|---|---|
-| 로컬 | 개발자 PC의 Next.js 개발 서버 | Supabase CLI 로컬 스택 | 개발, 마이그레이션 작성과 검증 | 구성 절차는 R0에서 확정 |
+| 로컬 | 개발자 PC의 Next.js 개발 서버 | Supabase CLI 로컬 스택 | 개발, 마이그레이션 작성과 검증 | 결정됨 (아래 Supabase 로컬 환경) |
 | preview | PR마다 만드는 Vercel preview 배포 | 연결할 프로젝트는 R0에서 확정 | PR 리뷰 중 화면 확인 | R0에서 확정 |
 | production | Vercel production, 함수 리전 icn1 | 서울(ap-northeast-2) 프로젝트 | 실제 서비스 | 결정됨 ([ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md)) |
 
@@ -70,6 +70,32 @@ R0 작업 [#4](https://github.com/god3v/hamtteukka/issues/4)에서 아래와 같
 
 Vercel 신규 프로젝트의 Node.js 기본값은 26.x이므로 버전을 명시하지 않으면 로컬과 다른 버전으로 빌드된다([Vercel Node.js 버전 문서](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)). 빌드 로그에서 pnpm 12가 선택되지 않으면 Vercel 환경 변수 `ENABLE_EXPERIMENTAL_COREPACK=1`을 추가해 `packageManager` 버전을 쓰게 한다([Vercel 빌드 설정 문서](https://vercel.com/docs/builds/configure-a-build)).
 
+## Supabase 로컬 환경
+
+R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 아래와 같이 정했다. 로컬 스택은 Docker 컨테이너로 실행하므로 개발자 PC에 Docker가 있어야 한다.
+
+| 항목 | 값 | 설정 위치 |
+|---|---|---|
+| Supabase CLI | 3.1.0 | 루트 `package.json`의 `devDependencies`. 따로 설치하지 않고 `pnpm install`로 받는다 |
+| 로컬 스택 설정 | Postgres 17, API 54321, DB 54322, Studio 54323 | `supabase/config.toml` |
+| 마이그레이션 | `<타임스탬프>_<이름>.sql` | `supabase/migrations/` |
+| 로컬 로그인 리디렉션 | `http://localhost:3000` | `supabase/config.toml`의 `auth.site_url` |
+| 실행 명령 | `pnpm db:start`, `pnpm db:stop`, `pnpm db:status`, `pnpm db:reset` | 루트 `package.json`의 `scripts` |
+
+환경 변수 이름은 루트의 `.env.example`에 적고, 실제 값은 저장소에 두지 않는다.
+
+| 변수 | 읽는 곳 | 내용 |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | 브라우저와 서버 | Supabase API 주소 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 브라우저와 서버 | 공개해도 되는 키. RLS가 권한을 검사한다 |
+| `SUPABASE_SECRET_KEY` | 서버 전용 | RLS를 거치지 않는 키. 예전 service-role 키를 대신한다 |
+
+로컬에서는 `.env.example`을 `apps/web/.env.local`로 복사하고 `pnpm db:status`(`supabase status -o env`)가 출력하는 `API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` 값을 채운다. preview와 production의 값은 Vercel 프로젝트의 환경 변수에 넣는다. `SUPABASE_SECRET_KEY`에는 `NEXT_PUBLIC_` 접두사를 붙이지 않으므로 브라우저 번들에 포함되지 않는다([constitution](../constitution.md) P-10).
+
+Supabase CLI 3.1.0은 로컬 스택의 포트를 `0.0.0.0`에 열고 바인딩 주소를 바꾸는 설정을 제공하지 않는다. 그래서 각 개발자가 Docker Desktop의 Docker Engine 설정에 `"ip": "127.0.0.1"`을 넣어 컨테이너 포트를 기본으로 루프백 주소에만 열게 한다. 절차는 [README](../../README.md#시작하기)에 있다.
+
+Supabase는 예전 anon 키와 service-role 키 대신 publishable 키와 secret 키를 쓰도록 안내하므로 새 키 이름을 따랐다([Supabase API 키 문서](https://supabase.com/docs/guides/api/api-keys)).
+
 ## R0에서 확정할 항목
 
 아래 항목은 방향만 정했고 구체적인 방식은 아직 정하지 않았다. R0 인프라 Task에서 정하고, 정한 내용을 이 문서에 반영한다.
@@ -80,7 +106,6 @@ Vercel 신규 프로젝트의 Node.js 기본값은 26.x이므로 버전을 명�
 | 병합 조건 | 소유자가 PR을 리뷰한 뒤 main에 병합한다 | CI 통과를 병합 조건으로 강제하는 브랜치 보호 설정 |
 | 마이그레이션 적용 | supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다 | 적용 시점과 주체(로컬 실행 또는 CI 작업), 실패 시 처리 |
 | preview 데이터 | PR마다 Vercel preview를 만든다 | preview가 연결할 Supabase 프로젝트와 테스트 데이터 |
-| 환경 변수 | 환경마다 Supabase 접속 정보가 다르다 | 변수 이름, 보관 위치, 로컬 예시 파일 |
 | OAuth 리디렉션 | 카카오·구글 로그인을 쓴다 | 환경별 리디렉션 URL 등록과 로컬 스택의 소셜 로그인 확인 방법 |
 
 R0의 종료 조건은 운영 도메인에서 가입, 로그인, 탈퇴가 동작하는 것이다([로드맵](../product/roadmap.md)). 위 항목은 이 조건을 확인하기 전에 모두 정한다.
