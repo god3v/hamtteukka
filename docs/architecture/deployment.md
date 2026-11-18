@@ -18,6 +18,9 @@ flowchart LR
   ci["GitHub Actions CI: typecheck, lint, test"]
   pv["Vercel preview 배포"]
   rv["소유자 리뷰"]
+  dv["dev 병합"]
+  dpv["dev 미리보기 주소"]
+  rel["dev → main 릴리스 PR"]
   mg["main 병합"]
   prod["Vercel production: 함수 icn1"]
   migr["supabase/migrations"]
@@ -30,7 +33,10 @@ flowchart LR
   pr -->|"자동 배포"| pv
   ci -->|"검사 결과"| rv
   pv -->|"화면 확인"| rv
-  rv -->|"승인"| mg
+  rv -->|"승인"| dv
+  dv -->|"자동 배포"| dpv
+  dpv -->|"통합 확인"| rel
+  rel -->|"merge commit"| mg
   mg -->|"자동 배포"| prod
   prod -->|"조회·저장"| sbprod
   dev -->|"SQL 마이그레이션 작성"| migr
@@ -38,9 +44,9 @@ flowchart LR
   cli -.->|"적용 시점과 주체는 R0에서 확정"| sbprod
 ```
 
-실선은 정한 흐름이고, 점선은 방식이 아직 정해지지 않아 R0 인프라 작업에서 확정할 흐름이다. 웹 코드는 PR과 main 병합을 따라 Vercel에 배포되고, DB 구조는 supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다.
+실선은 정한 흐름이고, 점선은 방식이 아직 정해지지 않아 R0 인프라 작업에서 확정할 흐름이다. 웹 코드는 PR을 `dev`에 병합해 미리보기 주소에서 확인하고, 릴리스 PR로 `main`에 병합할 때 운영에 배포된다([ADR-0013](../decisions/0013-dev-main-branch-flow.md)). DB 구조는 supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다.
 
-계획된 작업은 Task 이슈 하나와 PR 하나를 단위로 이 흐름을 거치고, 이슈 없는 작은 수정도 같은 PR 흐름을 거쳐 main에 들어간다([ADR-0012](../decisions/0012-issue-for-planned-work-only.md)). 브랜치 이름, PR 템플릿, 리뷰 절차는 [SDD 가이드](../sdd-guide.md)에서 설명한다. typecheck, lint, test 같은 실행 가능한 검사가 통과 여부를 정한다는 원칙은 [constitution](../constitution.md)에 있다.
+계획된 작업은 Task 이슈 하나와 PR 하나를 단위로 이 흐름을 거치고, 이슈 없는 작은 수정도 같은 PR 흐름을 거쳐 `dev`를 지나 main에 들어간다([ADR-0012](../decisions/0012-issue-for-planned-work-only.md)). 브랜치 이름, PR 템플릿, 리뷰 절차는 [SDD 가이드](../sdd-guide.md)에서 설명한다. typecheck, lint, test 같은 실행 가능한 검사가 통과 여부를 정한다는 원칙은 [constitution](../constitution.md)에 있다.
 
 ## 환경
 
@@ -59,6 +65,7 @@ R0 작업 [#4](https://github.com/god3v/hamtteukka/issues/4)에서 아래와 같
 | 항목 | 값 | 설정 위치 |
 |---|---|---|
 | Root Directory | `apps/web` | Vercel 프로젝트 설정 |
+| Production Branch | `main` | Vercel 프로젝트 설정(기본값). `dev`와 PR은 미리보기 주소에만 배포된다 |
 | Framework Preset | Next.js | Vercel 프로젝트 설정(자동 감지) |
 | Install Command, Build Command | 기본값 | Vercel 프로젝트 설정. pnpm이 루트의 `pnpm-lock.yaml`로 워크스페이스 전체를 설치한다 |
 | Root Directory 밖 파일 포함 | 켬(기본값) | Vercel 프로젝트 설정. `packages/shared`와 루트 lockfile을 쓰기 때문에 반드시 켠다 |
@@ -103,7 +110,7 @@ Supabase는 예전 anon 키와 service-role 키 대신 publishable 키와 secret
 | 항목 | 정해진 것 | R0에서 확정할 것 |
 |---|---|---|
 | CI 워크플로 | GitHub Actions에서 typecheck, lint, test를 실행한다 | 워크플로 파일 구성, Turborepo 작업 이름, 실행 조건 |
-| 병합 조건 | 소유자가 PR을 리뷰한 뒤 main에 병합한다 | CI 통과를 병합 조건으로 강제하는 브랜치 보호 설정 |
+| 병합 조건 | 소유자가 PR을 리뷰한 뒤 `dev`에 병합하고, 릴리스 PR로 `main`에 병합한다 | CI 통과를 병합 조건으로 강제하는 브랜치 보호 설정 |
 | 마이그레이션 적용 | supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다 | 적용 시점과 주체(로컬 실행 또는 CI 작업), 실패 시 처리 |
 | preview 데이터 | PR마다 Vercel preview를 만든다 | preview가 연결할 Supabase 프로젝트와 테스트 데이터 |
 | OAuth 리디렉션 | 카카오·구글 로그인을 쓴다 | 환경별 리디렉션 URL 등록과 로컬 스택의 소셜 로그인 확인 방법 |

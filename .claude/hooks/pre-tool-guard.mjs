@@ -66,8 +66,8 @@ function checkCommand() {
     deny("git 훅을 --no-verify로 건너뛰지 않는다. 훅이 지적한 원인을 고친다.");
   }
 
-  if (/\bgit\s+push\b[^\n;&|]*?[\s:+](?:main|master)(?=$|[\s;&|])/.test(command)) {
-    deny("main에 직접 푸시하지 않는다. 작업 브랜치를 푸시하고 PR로 병합한다.");
+  if (/\bgit\s+push\b[^\n;&|]*?[\s:+](?:main|master|dev)(?=$|[\s;&|])/.test(command)) {
+    deny("main과 dev에 직접 푸시하지 않는다. 작업 브랜치를 푸시하고 PR로 병합한다 (ADR-0013).");
   }
 }
 
