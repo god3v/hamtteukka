@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+.pnpm-store/
 
 # build outputs
 .next/
@@ -13,21 +14,40 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
-# env
+# caches
+.eslintcache
+.cache/
+
+# env and secrets
 .env
 .env.*
 !.env.example
+*.pem
+certificates/
 
 # platform
 .vercel/
 supabase/.temp/
 supabase/.branches/
 
-# os / editor
-.DS_Store
-Thumbs.db
-.idea/
+# logs
 *.log
 
-# local Claude Code settings
+# os
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# editor
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# AI agent local files
+# .claude/settings.json, .claude/skills/ and .claude/hooks/ are shared and committed.
 .claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md
