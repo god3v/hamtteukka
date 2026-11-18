@@ -15,7 +15,7 @@ flowchart LR
   dev["개발자 PC: Supabase CLI 로컬 스택"]
   br["작업 브랜치"]
   pr["GitHub PR"]
-  ci["GitHub Actions CI: typecheck, lint, test"]
+  ci["GitHub Actions CI: typecheck, lint, test, 문서 검사"]
   pv["Vercel preview 배포"]
   rv["소유자 리뷰"]
   dv["dev 병합"]
@@ -103,14 +103,35 @@ Supabase CLI 3.1.0은 로컬 스택의 포트를 기본으로 `0.0.0.0`에 연�
 
 Supabase는 예전 anon 키와 service-role 키 대신 publishable 키와 secret 키를 쓰도록 안내하므로 새 키 이름을 따랐다([Supabase API 키 문서](https://supabase.com/docs/guides/api/api-keys)).
 
+## CI와 브랜치 보호
+
+R0 작업 [#5](https://github.com/god3v/hamtteukka/issues/5)에서 아래와 같이 정했다. 워크플로는 [.github/workflows/ci.yml](../../.github/workflows/ci.yml)에 있다.
+
+| 항목 | 값 |
+|---|---|
+| 실행 조건 | `dev`나 `main`으로 가는 PR, `dev`와 `main`에 들어온 푸시 |
+| `checks` 작업 | `pnpm install --frozen-lockfile` 뒤 `pnpm typecheck`, `pnpm lint`, `pnpm test`, `node scripts/check-docs.mjs`를 차례로 실행한다 |
+| `release-source` 작업 | `main`으로 가는 PR의 출발 브랜치가 `dev`가 아니면 실패한다([ADR-0013](../decisions/0013-dev-main-branch-flow.md)) |
+| 실행 환경 | ubuntu-latest, Node.js 24, pnpm은 `packageManager` 버전 |
+| 액션 버전 | 태그 대신 커밋 SHA로 고정한다([constitution](../constitution.md) P-14) |
+
+브랜치 보호는 저장소 규칙(ruleset)으로 건다.
+
+| 브랜치 | 규칙 |
+|---|---|
+| `dev` | PR로만 병합한다. `checks` 통과가 필요하다. 강제 푸시와 삭제를 막는다 |
+| `main` | PR로만 병합한다. `checks`와 `release-source` 통과가 필요하다. 강제 푸시와 삭제를 막는다 |
+
+1인 프로젝트라 PR 승인 수는 요구하지 않는다. 저장소 소유자에게도 같은 규칙이 적용되도록 우회 대상을 두지 않는다. 에이전트의 직접 푸시를 막는 [pre-tool-guard](../../.claude/hooks/pre-tool-guard.mjs) 훅은 실수를 줄이는 장치이고, 실제 차단은 이 규칙이 맡는다.
+
+`dev` 병합 뒤 Project Status를 `dev 반영`으로 바꾸는 자동화는 넣지 않았다. 사용자 계정의 Project는 워크플로의 기본 토큰(`GITHUB_TOKEN`)으로 고칠 수 없어, `project` 권한을 가진 개인 토큰을 저장소 Secret에 두어야 하기 때문이다. 지금은 [ADR-0013](../decisions/0013-dev-main-branch-flow.md)대로 사람이 바꾼다.
+
 ## R0에서 확정할 항목
 
 아래 항목은 방향만 정했고 구체적인 방식은 아직 정하지 않았다. R0 인프라 Task에서 정하고, 정한 내용을 이 문서에 반영한다.
 
 | 항목 | 정해진 것 | R0에서 확정할 것 |
 |---|---|---|
-| CI 워크플로 | GitHub Actions에서 typecheck, lint, test를 실행한다 | 워크플로 파일 구성, Turborepo 작업 이름, 실행 조건 |
-| 병합 조건 | 소유자가 PR을 리뷰한 뒤 `dev`에 병합하고, 릴리스 PR로 `main`에 병합한다 | CI 통과를 병합 조건으로 강제하는 브랜치 보호 설정 |
 | 마이그레이션 적용 | supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다 | 적용 시점과 주체(로컬 실행 또는 CI 작업), 실패 시 처리 |
 | preview 데이터 | PR마다 Vercel preview를 만든다 | preview가 연결할 Supabase 프로젝트와 테스트 데이터 |
 | OAuth 리디렉션 | 카카오·구글 로그인을 쓴다 | 환경별 리디렉션 URL 등록과 로컬 스택의 소셜 로그인 확인 방법 |
