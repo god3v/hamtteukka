@@ -20,8 +20,8 @@ features: [F-COUNTER-01, F-COUNTER-02, F-COUNTER-03, F-COUNTER-04]
 | 상태 | 검토 대기 (`review`) |
 | 출시 단계 | R1 MVP |
 | 기능 ID | F-COUNTER-01, F-COUNTER-02, F-COUNTER-03, F-COUNTER-04 |
-| Feature 이슈 | `[003] 단수 카운터` |
-| 승인 위치 | Feature 이슈의 '요구사항 검토' Task (`[003] 요구사항 검토와 확인 질문 해결`) |
+| Feature 이슈 | [#16](https://github.com/god3v/hamtteukka/issues/16) `[003] 단수 카운터` |
+| 승인 위치 | Feature 이슈의 '요구사항 검토' Task ([#17](https://github.com/god3v/hamtteukka/issues/17) `[003] 요구사항 검토와 확인 질문 해결`) |
 | 선행 명세 | [002 뜨개 프로젝트 기록](../002-projects/requirements.md) |
 | 연결된 미결정 항목 | 없음 |
 | 승인 조건 | 확인 질문(Q)을 모두 해결했다 |

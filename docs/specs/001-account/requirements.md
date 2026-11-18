@@ -22,8 +22,8 @@ features: [F-ACCT-01, F-ACCT-04, F-ACCT-05]
 | 상태 | 검토 대기 (`review`) |
 | 출시 단계 | R0 기반 |
 | 기능 ID | F-ACCT-01, F-ACCT-04, F-ACCT-05 |
-| Feature 이슈 | `[001] 계정: 가입·로그인·약관 동의·탈퇴` |
-| 승인 위치 | Feature 이슈의 '요구사항 검토' Task (`[001] 요구사항 검토와 확인 질문 해결`) |
+| Feature 이슈 | [#8](https://github.com/god3v/hamtteukka/issues/8) `[001] 계정: 가입·로그인·약관 동의·탈퇴` |
+| 승인 위치 | Feature 이슈의 '요구사항 검토' Task ([#9](https://github.com/god3v/hamtteukka/issues/9) `[001] 요구사항 검토와 확인 질문 해결`) |
 | 선행 명세 | 없음 |
 | 연결된 미결정 항목 | [OD-01 만 14세 미만 가입 처리](../../decisions/README.md), [OD-02 탈퇴 데이터 처리](../../decisions/README.md) (R0 착수 전 결정) |
 | 승인 조건 | 확인 질문(Q)을 모두 해결했다 |

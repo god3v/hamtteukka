@@ -22,8 +22,8 @@ features: [F-PROJ-01, F-PROJ-02, F-TOOL-01]
 | 상태 | 검토 대기 (`review`) |
 | 출시 단계 | R1 MVP |
 | 기능 ID | F-PROJ-01, F-PROJ-02, F-TOOL-01 |
-| Feature 이슈 | `[002] 뜨개 프로젝트 기록` |
-| 승인 위치 | Feature 이슈의 '요구사항 검토' Task (`[002] 요구사항 검토와 확인 질문 해결`) |
+| Feature 이슈 | [#12](https://github.com/god3v/hamtteukka/issues/12) `[002] 뜨개 프로젝트 기록` |
+| 승인 위치 | Feature 이슈의 '요구사항 검토' Task ([#13](https://github.com/god3v/hamtteukka/issues/13) `[002] 요구사항 검토와 확인 질문 해결`) |
 | 선행 명세 | [001 계정](../001-account/requirements.md) (R0) |
 | 연결된 미결정 항목 | [OD-03 개인 PDF 업로드 용량 한도](../../decisions/README.md) (R1 착수 전 결정) |
 | 승인 조건 | 확인 질문(Q)을 모두 해결했다 |

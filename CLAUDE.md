@@ -51,7 +51,7 @@ docs/              제품, 결정, 조사, 명세 문서
 ## GitHub
 
 - 저장소: `god3v/hamtteukka`, 기본 브랜치 `main`
-- Project 보드: `함뜨까` (필드: Status, SDD 단계, Size, Iteration)
+- Project 보드: `함뜨까`, 번호 5 (`gh project ... 5 --owner @me`). 필드: Status, SDD 단계, Size, Iteration
 - 마일스톤: R0 기반, R1 MVP, R1+ 도구 보강, R2 무료 도안 배포, R3 커뮤니티, R4 유료 판매, A1 앱
 - 브랜치 이름: `feat/<이슈번호>-<요약>`, `fix/<이슈번호>-<요약>`, `docs/<이슈번호>-<요약>`
 - Windows에서 `gh`가 PATH에 없으면 `C:\Program Files\GitHub CLI\gh.exe`를 쓴다.
