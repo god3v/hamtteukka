@@ -7,9 +7,14 @@ import { fileURLToPath } from "node:url";
 import { ESLint } from "eslint";
 
 const eslint = new ESLint({ cwd: dirname(fileURLToPath(import.meta.url)) });
+const FILE_PATH = "app/example.ts";
 
+// 예시 코드가 실제로 검사되었는지(무시되지 않았고 파싱 오류가 없는지) 확인한 뒤 ADR-0003 오류만 돌려준다.
 async function supabaseErrors(code) {
-  const [result] = await eslint.lintText(code, { filePath: "app/example.ts" });
+  assert.equal(await eslint.isPathIgnored(FILE_PATH), false, `${FILE_PATH}가 ESLint 검사에서 제외되어 있다`);
+  const [result] = await eslint.lintText(code, { filePath: FILE_PATH });
+  const fatal = result.messages.filter((message) => message.fatal);
+  assert.deepEqual(fatal, [], "예시 코드를 파싱하지 못했다");
   return result.messages.filter((message) => message.message.includes("ADR-0003"));
 }
 
@@ -21,6 +26,8 @@ const blocked = [
   ["export from", `export { createClient } from "@supabase/supabase-js";`],
   ["동적 import", `export const load = () => import("@supabase/supabase-js");`],
   ["require", `export const c = require("@supabase/ssr");`],
+  ["템플릿 리터럴 동적 import", "export const load = () => import(`@supabase/supabase-js`);"],
+  ["템플릿 리터럴 require", "export const c = require(`@supabase/ssr`);"],
 ];
 
 for (const [name, code] of blocked) {
@@ -34,6 +41,15 @@ for (const [name, code] of blocked) {
 test("앱 코드에서 @hamtteukka/shared import는 허용한다", async () => {
   const errors = await supabaseErrors(`import { appInfo } from "@hamtteukka/shared";\nexport const a = appInfo;`);
   assert.equal(errors.length, 0);
+});
+
+test("경로를 조합하는 동적 import는 검사하지 않는다", async () => {
+  const errors = await supabaseErrors("const pkg = \"supabase-js\";\nexport const load = () => import(`@supabase/${pkg}`);");
+  assert.equal(errors.length, 0);
+});
+
+test("파싱할 수 없는 예시 코드는 허용 테스트에서도 실패로 드러난다", async () => {
+  await assert.rejects(supabaseErrors("import {"), /파싱하지 못했다/);
 });
 
 test("이름이 비슷한 다른 패키지는 막지 않는다", async () => {

@@ -88,7 +88,7 @@ flowchart TB
 | 앱끼리 서로 import하지 않는다 | 웹과 앱이 함께 쓸 코드는 packages/shared에 둔다 |
 | TypeScript 코드는 apps/api와 HTTP로만 통신한다 | Spring 서버는 별도 빌드와 배포 단위다 |
 
-apps의 ESLint 설정이 `@supabase/`로 시작하는 모든 패키지의 import를 lint 오류로 만든다. `no-restricted-imports`가 import 문, `export ... from` 문, `import type` 문, 하위 경로를 막고, `no-restricted-syntax`가 동적 `import()`와 `require()`를 막는다. 규칙은 [apps/web/eslint.config.mjs](../../apps/web/eslint.config.mjs)에 있고, 같은 폴더의 `eslint.config.test.mjs`가 막아야 하는 경우와 허용하는 경우를 `pnpm test`에서 확인한다. 이 경계는 [ADR-0003](../decisions/0003-data-access-boundary.md)이 정했다.
+ADR-0003의 경계는 모든 앱에 적용되고, 지금은 앱이 하나뿐이라 apps/web의 ESLint 설정이 이를 검사한다. 이 설정은 `@supabase/`로 시작하는 모든 패키지의 import를 lint 오류로 만든다. `no-restricted-imports`가 import 문, `export ... from` 문, `import type` 문, 하위 경로를 막는다. `no-restricted-syntax`는 동적 `import()`와 `require()`를 막되, 인수가 문자열이거나 치환식 없는 템플릿 리터럴일 때만 검사하고 경로를 조합하는 식은 검사하지 않는다. A1에서 apps/mobile을 추가할 때 같은 규칙을 넣는다. 규칙은 [apps/web/eslint.config.mjs](../../apps/web/eslint.config.mjs)에 있고, 같은 폴더의 `eslint.config.test.mjs`가 막아야 하는 경우와 허용하는 경우를 `pnpm test`에서 확인한다. 이 경계는 [ADR-0003](../decisions/0003-data-access-boundary.md)이 정했다.
 
 ## 패키지별 책임
 
