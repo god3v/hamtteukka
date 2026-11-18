@@ -1,0 +1,39 @@
+name: Feature
+description: 스펙 폴더 하나에 대응하는 기능 단위 이슈를 만든다.
+title: "[NNN] "
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature 이슈는 docs/specs 아래의 스펙 폴더 하나에 대응한다. 하위 Task 이슈는 `/sdd-tasks`가 이 이슈의 하위 이슈로 만든다.
+        제목은 `[001] 계정: 가입·로그인·약관 동의·탈퇴`처럼 스펙 번호로 시작한다. 스펙 폴더가 아직 없는 이후 릴리스 Feature는 `[R2] 도안 등록과 심사`처럼 릴리스 코드로 시작한다.
+        이슈를 만든 뒤 릴리스 마일스톤(예: `R1 MVP`)과 area 라벨을 지정하고 Project `함뜨까`에 추가한다.
+  - type: input
+    id: spec-folder
+    attributes:
+      label: 스펙 폴더
+      description: 이 Feature의 요구사항과 설계가 있는 폴더 경로를 적는다. 스펙 폴더가 없는 Feature는 "없음"과 그 이유를 적는다.
+      placeholder: docs/specs/001-account
+    validations:
+      required: true
+  - type: input
+    id: feature-ids
+    attributes:
+      label: 범위(F-IDs)
+      description: docs/product/feature-catalog.md에 있는 기능 ID를 쉼표로 구분해 적는다.
+      placeholder: F-ACCT-01, F-ACCT-04, F-ACCT-05
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 조건
+      description: 이 Feature를 닫는 조건이다. 기본 항목은 유지하고 필요한 항목을 더한다.
+      value: |
+        - [ ] requirements.md가 승인되었다(status: approved)
+        - [ ] 설계 문서가 승인되었다
+        - [ ] 모든 하위 Task 이슈가 닫혔다
+        - [ ] `/sdd-verify`에서 요구사항과 구현 사이에 남은 차이가 없다
+    validations:
+      required: true

@@ -1,0 +1,46 @@
+name: Bug
+description: 의도와 다르게 동작하는 문제를 보고한다.
+type: Bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        버그 수정은 SDD 흐름을 거치지 않고, 이 이슈와 `fix/<이슈 번호>-<slug>` 브랜치의 PR로 처리한다.
+        고치려면 테이블을 추가하거나 요구사항이나 설계를 바꿔야 한다면, 해당 스펙 문서를 먼저 고치거나 SDD 흐름으로 진행한다.
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 증상
+      description: 화면에 보인 것이나 오류 메시지를 그대로 적는다.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 절차
+      description: 처음 화면부터 증상이 나타날 때까지 한 일을 순서대로 적는다.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+      description: 원래 어떻게 동작해야 하는지 적는다. 관련 AC ID가 있으면 함께 적는다.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 환경
+      description: 기기, 운영체제, 브라우저, 화면 모드, 접속한 주소를 적는다.
+      placeholder: |
+        - 기기와 운영체제:
+        - 브라우저:
+        - 화면 모드: 라이트 또는 다크
+        - 접속한 주소:
+    validations:
+      required: false

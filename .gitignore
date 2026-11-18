@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# build outputs
+.next/
+.turbo/
+dist/
+build/
+coverage/
+out/
+
+# env
+.env
+.env.*
+!.env.example
+
+# platform
+.vercel/
+supabase/.temp/
+supabase/.branches/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.log
+
+# local Claude Code settings
+.claude/settings.local.json
