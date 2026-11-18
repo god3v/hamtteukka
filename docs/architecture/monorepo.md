@@ -12,7 +12,7 @@ updated: 2026-11-18
 
 ### R0에서 만드는 구조
 
-2026-11-18 기준으로 저장소에는 문서와 설정 파일만 있다. 아래 구조 가운데 apps/web, packages/shared, supabase/는 R0 인프라 작업에서 만든다.
+apps/web과 packages/shared는 R0 작업 [#2](https://github.com/god3v/hamtteukka/issues/2)에서 만들었고, supabase/는 R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 만든다.
 
 ```text
 hamtteukka/
@@ -29,7 +29,7 @@ hamtteukka/
 └── README.md
 ```
 
-TypeScript 쪽 패키지는 pnpm workspaces와 Turborepo로 묶는다. 워크스페이스 설정 파일과 Turborepo 작업 정의는 R0 작업 `[R0] pnpm 모노레포 뼈대 구성`에서 추가한다.
+TypeScript 쪽 패키지는 pnpm workspaces와 Turborepo로 묶는다. 워크스페이스는 루트의 `pnpm-workspace.yaml`이 정하고, 패키지 사이의 작업 순서(build, typecheck, lint, test, dev)는 루트의 `turbo.json`이 정한다. 실행 명령과 도구 버전은 [CLAUDE.md](../../CLAUDE.md)의 명령 절에 있다.
 
 ### 나중에 추가하는 구조
 
@@ -98,7 +98,7 @@ apps의 ESLint 설정에 no-restricted-imports 규칙을 넣어 Supabase 클라�
 | apps/api | 결제·주문·환불·원장·지급 API, commerce 스키마의 Flyway 마이그레이션 | public 스키마 변경 | R4 |
 | apps/mobile | Expo 화면과 네이티브 기능 | Supabase 직접 호출, 비즈니스 규칙 | A1 |
 
-packages/shared 안의 함수는 도메인별로 나눈다. 나중에 도메인 단위로 내부 구현을 바꾸려면 경계가 코드 구조에 드러나야 하기 때문이다. 폴더 이름과 공개 경로는 R0에서 확정한다. 스키마 소유권은 [ERD 개요](erd-overview.md)와 [ADR-0006](../decisions/0006-migration-ownership.md)에서 설명한다.
+packages/shared 안의 함수는 도메인별로 나눈다. 나중에 도메인 단위로 내부 구현을 바꾸려면 경계가 코드 구조에 드러나야 하기 때문이다. 도메인마다 `packages/shared/src/<도메인>/` 폴더를 두고, 다른 패키지가 쓸 수 있는 이름은 모두 `src/index.ts`에 모은다. 앱은 `@hamtteukka/shared`라는 패키지 이름으로만 import하고 내부 경로를 직접 가져오지 않는다. 스키마 소유권은 [ERD 개요](erd-overview.md)와 [ADR-0006](../decisions/0006-migration-ownership.md)에서 설명한다.
 
 ## Server Action이 shared 함수를 감싸는 방식
 

@@ -45,7 +45,7 @@ spec-kit은 설치하지 않는다. spec-kit 1.4.2의 명령은 spec.md와 plan.
 ```mermaid
 flowchart TD
   Start["변경 요청"] --> Check{"SDD 적용 대상인가"}
-  Check -->|"아니오"| Direct["이슈와 PR로 바로 진행"]
+  Check -->|"아니오"| Direct["SDD 없이 PR로 바로 진행"]
   Check -->|"예"| Spec["/sdd-spec 요구사항 작성"]
   Spec --> Open{"열린 확인 질문이 있는가"}
   Open -->|"있음"| Clarify["확인 질문 라운드, 최대 5개"]
@@ -89,9 +89,9 @@ flowchart TD
 | 화면 추가 | 적용 | `/sdd-spec`부터 시작한다 |
 | 권한 규칙 변경(RLS 정책 추가나 변경) | 적용 | `/sdd-spec`부터 시작한다 |
 | SDD로 만든 기능의 요구사항이나 설계 변경 | 해당 스펙 수정 | [수정 규칙](#수정-규칙)에 따라 상위 문서부터 고친다 |
-| 버그 수정 | 미적용 | Bug 이슈와 `fix/` 브랜치의 PR로 처리한다 |
-| 문구 변경 | 미적용 | Task 이슈와 PR로 처리한다 |
-| 리팩터링 | 미적용 | Task 이슈와 PR로 처리한다 |
+| 버그 수정 | 미적용 | 나중에 다시 확인할 가치가 있는 버그는 Bug 이슈와 `fix/` 브랜치의 PR로 처리한다. 그 밖의 작은 버그는 이슈 없이 PR로 고친다 |
+| 문서 문구, 템플릿, 설정의 작은 수정 | 미적용 | 이슈 없이 처리한다. 관련된 PR이 열려 있으면 함께 넣고 본문에 따로 적으며, 없으면 이슈 없는 PR을 연다([ADR-0012](decisions/0012-issue-for-planned-work-only.md)) |
+| 리팩터링 | 미적용 | 동작을 바꾸지 않는 작은 리팩터링은 위 행처럼 처리한다. 범위가 크면 Task 이슈와 PR로 처리한다 |
 | R0 인프라 작업 | 미적용 | 스펙 폴더 없이 ADR을 근거로 R0 인프라 Feature의 Task를 만든다 |
 
 한 변경이 여러 행에 해당하면 SDD를 적용하는 쪽을 따른다. 예를 들어 버그를 고치다가 테이블을 추가해야 하면 SDD 대상이다. F-UX-01, F-UX-02, F-SUPPORT-01은 R0 인프라 Feature 안에서 스펙 폴더 없이 처리한다.
@@ -286,6 +286,7 @@ Project의 다른 필드는 다음과 같이 쓴다.
 - [SDD 참고 자료 조사](research/2026-11-18-sdd-references.md): 카카오페이의 spec-kit 사례, spec-kit 1.4.2, gh CLI와 Projects를 조사한 기록
 - [ADR-0010 카카오페이 흐름 기반 SDD와 다이어그램 중심 설계](decisions/0010-sdd-diagram-first.md): spec-kit 대신 스킬 다섯 개와 다이어그램 중심 설계를 고른 이유
 - [ADR-0011 GitHub Issues·Projects로 업무 관리](decisions/0011-github-issues-projects.md): Issues와 Projects로 작업을 관리하고 Task 하나를 PR 하나로 끝내는 이유
+- [ADR-0012 계획된 작업만 이슈로 관리](decisions/0012-issue-for-planned-work-only.md): 이슈가 필요한 변경과 이슈 없이 PR로 처리하는 작은 수정을 나누는 기준
 - [함뜨까 프로젝트 헌법](constitution.md): 게이트에서 점검하는 원칙과 확인 방법
 - [요구사항 템플릿](specs/_template/requirements.md): `/sdd-spec`이 복사하는 requirements.md 골격
 - [로드맵](product/roadmap.md): 릴리스 순서와 릴리스마다 정한 진입 조건과 종료 조건

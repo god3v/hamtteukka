@@ -9,6 +9,10 @@ build/
 coverage/
 out/
 
+# next / typescript generated
+next-env.d.ts
+*.tsbuildinfo
+
 # env
 .env
 .env.*
