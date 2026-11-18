@@ -66,7 +66,7 @@ pnpm dev
 
 개발 서버는 http://localhost:3000 에서, Supabase Studio는 http://127.0.0.1:54323 에서 열린다.
 
-Supabase CLI 3.1.0은 로컬 스택의 포트(54321~54324, 54327)를 모든 네트워크 주소(`0.0.0.0`)에 연다. 카페 와이파이처럼 공유 네트워크에서는 같은 네트워크의 다른 기기가 Studio와 DB에 접속할 수 있다. CLI에는 바인딩 주소를 바꾸는 설정이 없으므로, Docker Desktop의 Settings > Docker Engine 설정 JSON에 `"ip": "127.0.0.1"`을 추가하고 Docker를 다시 시작한다. 이 설정은 이 PC의 모든 컨테이너가 포트를 기본으로 `127.0.0.1`에만 열게 한다. 적용 뒤 `docker ps`의 PORTS 칸이 `127.0.0.1:54321->8000/tcp`처럼 보이면 된다.
+`pnpm db:start`와 `pnpm db:reset`은 로컬 스택의 포트를 `127.0.0.1`에만 연다. 같은 네트워크의 다른 기기는 Studio와 DB에 접속할 수 없다. `docker ps`의 PORTS 칸이 `127.0.0.1:54321->8000/tcp`처럼 보이면 된다. `supabase start`를 직접 실행하면 포트가 `0.0.0.0`에 열리므로 `pnpm db:start`를 쓴다.
 
 | 명령 | 하는 일 |
 |---|---|
