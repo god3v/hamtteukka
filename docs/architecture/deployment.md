@@ -99,7 +99,7 @@ R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 아래와 같
 
 로컬에서는 `.env.example`을 `apps/web/.env.local`로 복사하고 `pnpm db:status`(`supabase status -o env`)가 출력하는 `API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` 값을 채운다. preview와 production의 값은 Vercel 프로젝트의 환경 변수에 넣는다. `SUPABASE_SECRET_KEY`에는 `NEXT_PUBLIC_` 접두사를 붙이지 않으므로 브라우저 번들에 포함되지 않는다([constitution](../constitution.md) P-10).
 
-Supabase CLI 3.1.0은 로컬 스택의 포트를 `0.0.0.0`에 열고 바인딩 주소를 바꾸는 설정을 제공하지 않는다. 그래서 각 개발자가 Docker Desktop의 Docker Engine 설정에 `"ip": "127.0.0.1"`을 넣어 컨테이너 포트를 기본으로 루프백 주소에만 열게 한다. 절차는 [README](../../README.md#시작하기)에 있다.
+Supabase CLI 3.1.0은 로컬 스택의 포트를 기본으로 `0.0.0.0`에 연다. 그래서 `pnpm db:start`와 `pnpm db:reset`은 [scripts/supabase-local.mjs](../../scripts/supabase-local.mjs)를 거쳐, 포트를 `127.0.0.1`에만 여는 Docker 네트워크 `hamtteukka-local`에서 스택을 실행한다. 네트워크가 없으면 스크립트가 `com.docker.network.bridge.host_binding_ipv4=127.0.0.1` 옵션으로 만들고, 같은 이름의 네트워크가 이 옵션 없이 있으면 실행을 멈춘다. Docker Engine 28.0.0 미만은 `127.0.0.1`에 게시한 포트도 같은 L2 구간의 다른 기기가 접근할 수 있으므로 28.0.0 이상을 쓴다([Docker 포트 게시 문서](https://docs.docker.com/engine/network/port-publishing/)).
 
 Supabase는 예전 anon 키와 service-role 키 대신 publishable 키와 secret 키를 쓰도록 안내하므로 새 키 이름을 따랐다([Supabase API 키 문서](https://supabase.com/docs/guides/api/api-keys)).
 

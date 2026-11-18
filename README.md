@@ -48,7 +48,7 @@
 
 ## 시작하기
 
-Node.js 24.x, pnpm 12, Docker가 필요하다. pnpm 버전은 루트 `package.json`의 `packageManager` 필드를 따른다. Docker는 Supabase 로컬 스택을 실행하는 데 쓴다.
+Node.js 24.x, pnpm 12, Docker Engine 28.0.0 이상(Docker Desktop에 포함)이 필요하다. pnpm 버전은 루트 `package.json`의 `packageManager` 필드를 따른다. Docker는 Supabase 로컬 스택을 실행하는 데 쓴다.
 
 처음 한 번은 의존성을 설치하고 로컬 스택을 띄운 뒤 환경 변수 파일을 만든다. `cp -n`은 `apps/web/.env.local`이 이미 있으면 덮어쓰지 않으므로 기존 설정이 남는다.
 
@@ -66,7 +66,7 @@ pnpm dev
 
 개발 서버는 http://localhost:3000 에서, Supabase Studio는 http://127.0.0.1:54323 에서 열린다.
 
-Supabase CLI 3.1.0은 로컬 스택의 포트(54321~54324, 54327)를 모든 네트워크 주소(`0.0.0.0`)에 연다. 카페 와이파이처럼 공유 네트워크에서는 같은 네트워크의 다른 기기가 Studio와 DB에 접속할 수 있다. CLI에는 바인딩 주소를 바꾸는 설정이 없으므로, Docker Desktop의 Settings > Docker Engine 설정 JSON에 `"ip": "127.0.0.1"`을 추가하고 Docker를 다시 시작한다. 이 설정은 이 PC의 모든 컨테이너가 포트를 기본으로 `127.0.0.1`에만 열게 한다. 적용 뒤 `docker ps`의 PORTS 칸이 `127.0.0.1:54321->8000/tcp`처럼 보이면 된다.
+`pnpm db:start`와 `pnpm db:reset`은 로컬 스택을 `hamtteukka-local` 네트워크에서 실행해 포트를 `127.0.0.1`에만 연다. Docker Engine 28.0.0 미만은 `127.0.0.1`에 연 포트도 같은 L2 구간의 다른 기기가 접근할 수 있으므로, 스크립트가 경고를 출력하면 Docker를 업데이트한다. 바인딩 주소는 `docker ps`의 PORTS 칸에서 `127.0.0.1:54321->8000/tcp`처럼 보이는지로 확인한다. 이 네트워크를 쓰기 전에 띄운 스택이 실행 중이면 두 명령은 멈추고 `pnpm db:stop` 뒤 다시 실행하라고 안내한다. `supabase start`를 직접 실행하면 포트가 `0.0.0.0`에 열리므로 `pnpm db:start`를 쓴다.
 
 | 명령 | 하는 일 |
 |---|---|
