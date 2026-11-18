@@ -90,7 +90,9 @@ R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 아래와 같
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 브라우저와 서버 | 공개해도 되는 키. RLS가 권한을 검사한다 |
 | `SUPABASE_SECRET_KEY` | 서버 전용 | RLS를 거치지 않는 키. 예전 service-role 키를 대신한다 |
 
-로컬에서는 `.env.example`을 `apps/web/.env.local`로 복사하고 `pnpm db:status`가 출력하는 값을 채운다. preview와 production의 값은 Vercel 프로젝트의 환경 변수에 넣는다. `SUPABASE_SECRET_KEY`에는 `NEXT_PUBLIC_` 접두사를 붙이지 않으므로 브라우저 번들에 포함되지 않는다([constitution](../constitution.md) P-10).
+로컬에서는 `.env.example`을 `apps/web/.env.local`로 복사하고 `pnpm db:status`(`supabase status -o env`)가 출력하는 `API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` 값을 채운다. preview와 production의 값은 Vercel 프로젝트의 환경 변수에 넣는다. `SUPABASE_SECRET_KEY`에는 `NEXT_PUBLIC_` 접두사를 붙이지 않으므로 브라우저 번들에 포함되지 않는다([constitution](../constitution.md) P-10).
+
+Supabase CLI 3.1.0은 로컬 스택의 포트를 `0.0.0.0`에 열고 바인딩 주소를 바꾸는 설정을 제공하지 않는다. 그래서 각 개발자가 Docker Desktop의 Docker Engine 설정에 `"ip": "127.0.0.1"`을 넣어 컨테이너 포트를 기본으로 루프백 주소에만 열게 한다. 절차는 [README](../../README.md#시작하기)에 있다.
 
 Supabase는 예전 anon 키와 service-role 키 대신 publishable 키와 secret 키를 쓰도록 안내하므로 새 키 이름을 따랐다([Supabase API 키 문서](https://supabase.com/docs/guides/api/api-keys)).
 

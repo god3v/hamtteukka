@@ -50,14 +50,23 @@
 
 Node.js 24.x, pnpm 12, Docker가 필요하다. pnpm 버전은 루트 `package.json`의 `packageManager` 필드를 따른다. Docker는 Supabase 로컬 스택을 실행하는 데 쓴다.
 
+처음 한 번은 의존성을 설치하고 로컬 스택을 띄운 뒤 환경 변수 파일을 만든다. `cp -n`은 `apps/web/.env.local`이 이미 있으면 덮어쓰지 않으므로 기존 설정이 남는다.
+
 ```bash
 pnpm install
 pnpm db:start
-cp .env.example apps/web/.env.local
+cp -n .env.example apps/web/.env.local
+```
+
+`pnpm db:start`는 처음 실행할 때 Docker 이미지를 내려받으므로 몇 분이 걸린다. 그다음 `pnpm db:status`를 실행해 출력의 `API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` 값을 `apps/web/.env.local`의 세 변수에 채운다. 값을 채운 뒤 개발 서버를 실행한다.
+
+```bash
 pnpm dev
 ```
 
-`pnpm db:start`는 처음 실행할 때 Docker 이미지를 내려받으므로 몇 분이 걸린다. `apps/web/.env.local`에는 `pnpm db:status`가 출력하는 `API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` 값을 채운다. 개발 서버는 http://localhost:3000 에서, Supabase Studio는 http://127.0.0.1:54323 에서 열린다.
+개발 서버는 http://localhost:3000 에서, Supabase Studio는 http://127.0.0.1:54323 에서 열린다.
+
+Supabase CLI 3.1.0은 로컬 스택의 포트(54321~54324, 54327)를 모든 네트워크 주소(`0.0.0.0`)에 연다. 카페 와이파이처럼 공유 네트워크에서는 같은 네트워크의 다른 기기가 Studio와 DB에 접속할 수 있다. CLI에는 바인딩 주소를 바꾸는 설정이 없으므로, Docker Desktop의 Settings > Docker Engine 설정 JSON에 `"ip": "127.0.0.1"`을 추가하고 Docker를 다시 시작한다. 이 설정은 이 PC의 모든 컨테이너가 포트를 기본으로 `127.0.0.1`에만 열게 한다. 적용 뒤 `docker ps`의 PORTS 칸이 `127.0.0.1:54321->8000/tcp`처럼 보이면 된다.
 
 | 명령 | 하는 일 |
 |---|---|
