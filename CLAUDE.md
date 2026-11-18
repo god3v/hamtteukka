@@ -14,7 +14,7 @@
 
 ## 작업 흐름
 
-새 테이블이나 새 화면을 추가하거나 권한 규칙을 바꾸는 작업은 SDD 절차를 따른다. 버그 수정, 문구 수정, 리팩터링은 이슈와 PR로 바로 처리한다.
+새 테이블이나 새 화면을 추가하거나 권한 규칙을 바꾸는 작업은 SDD 절차를 따른다. 버그 수정, 문구 수정, 리팩터링은 SDD 없이 PR로 바로 처리하며, 이슈가 필요한지는 아래 규칙과 [ADR-0012](docs/decisions/0012-issue-for-planned-work-only.md)를 따른다.
 
 | 단계 | 스킬 | 산출물 |
 |---|---|---|
@@ -32,7 +32,7 @@
 - RLS 정책을 추가하거나 바꾸면 해당 기능의 `design/erd.md` 정책 표를 함께 고친다 ([ADR-0004](docs/decisions/0004-rls-authorization.md)).
 - 이메일을 회원 식별 키로 쓰지 않는다 ([ADR-0005](docs/decisions/0005-auth-supabase-social-login.md)).
 - 구매 대금을 운영자 계좌로 받아 작가에게 보내는 흐름을 만들지 않는다 ([ADR-0009](docs/decisions/0009-payout-via-pg.md)).
-- Task 이슈 하나는 PR 하나로 끝낸다 ([ADR-0011](docs/decisions/0011-github-issues-projects.md)).
+- 계획된 작업(Task 이슈)은 PR 하나로 끝낸다 ([ADR-0011](docs/decisions/0011-github-issues-projects.md)). 문서 문구나 설정 같은 작은 수정은 이슈 없이 열려 있는 관련 PR에 함께 넣거나, 이슈 없는 PR로 처리한다 ([ADR-0012](docs/decisions/0012-issue-for-planned-work-only.md)). 어떤 경우든 main에 직접 커밋하지 않는다.
 - 설계를 바꿔야 하면 코드나 이슈를 먼저 고치지 않는다. 요구사항이나 설계 문서를 먼저 고친 뒤 아래 단계를 다시 만든다.
 - 완료를 보고할 때는 typecheck, lint, test의 실제 출력을 근거로 삼는다.
 
@@ -84,7 +84,7 @@ docs/              제품, 결정, 조사, 명세 문서
 - 저장소: `god3v/hamtteukka`, 기본 브랜치 `main`
 - Project 보드: `함뜨까`, 번호 5 (`gh project ... 5 --owner @me`). 필드: Status, SDD 단계, Size, Iteration
 - 마일스톤: R0 기반, R1 MVP, R1+ 도구 보강, R2 무료 도안 배포, R3 커뮤니티, R4 유료 판매, A1 앱
-- 브랜치 이름: `feat/<이슈번호>-<요약>`, `fix/<이슈번호>-<요약>`, `docs/<이슈번호>-<요약>`
+- 브랜치 이름: 이슈가 있으면 `feat/<이슈번호>-<요약>`, `fix/<이슈번호>-<요약>`, `docs/<이슈번호>-<요약>`을 쓰고, 이슈 없는 PR은 `docs/<요약>`, `chore/<요약>`처럼 이슈 번호를 빼고 쓴다.
 - Windows에서 `gh`가 PATH에 없으면 `C:\Program Files\GitHub CLI\gh.exe`를 쓴다.
 
 ## 문서 작성 규칙
