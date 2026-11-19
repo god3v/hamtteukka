@@ -303,7 +303,7 @@ flowchart TD
 
 | 필드 | 값 |
 |---|---|
-| Status | Todo, In Progress, Done |
+| Status | Todo, In Progress, dev 반영, Done |
 | SDD 단계 | 요구사항, 설계, 작업 분해, 구현, 검증 |
 | Size | S, M, L, XL |
 | Iteration | 1주 단위 |

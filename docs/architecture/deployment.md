@@ -15,9 +15,12 @@ flowchart LR
   dev["개발자 PC: Supabase CLI 로컬 스택"]
   br["작업 브랜치"]
   pr["GitHub PR"]
-  ci["GitHub Actions CI: typecheck, lint, test"]
+  ci["GitHub Actions CI: typecheck, lint, test, 문서 검사"]
   pv["Vercel preview 배포"]
   rv["소유자 리뷰"]
+  dv["dev 병합"]
+  dpv["dev 미리보기 주소"]
+  rel["dev → main 릴리스 PR"]
   mg["main 병합"]
   prod["Vercel production: 함수 icn1"]
   migr["supabase/migrations"]
@@ -30,7 +33,10 @@ flowchart LR
   pr -->|"자동 배포"| pv
   ci -->|"검사 결과"| rv
   pv -->|"화면 확인"| rv
-  rv -->|"승인"| mg
+  rv -->|"승인"| dv
+  dv -->|"자동 배포"| dpv
+  dpv -->|"통합 확인"| rel
+  rel -->|"merge commit"| mg
   mg -->|"자동 배포"| prod
   prod -->|"조회·저장"| sbprod
   dev -->|"SQL 마이그레이션 작성"| migr
@@ -38,9 +44,9 @@ flowchart LR
   cli -.->|"적용 시점과 주체는 R0에서 확정"| sbprod
 ```
 
-실선은 정한 흐름이고, 점선은 방식이 아직 정해지지 않아 R0 인프라 작업에서 확정할 흐름이다. 웹 코드는 PR과 main 병합을 따라 Vercel에 배포되고, DB 구조는 supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다.
+실선은 정한 흐름이고, 점선은 방식이 아직 정해지지 않아 R0 인프라 작업에서 확정할 흐름이다. 웹 코드는 PR을 `dev`에 병합해 미리보기 주소에서 확인하고, 릴리스 PR로 `main`에 병합할 때 운영에 배포된다([ADR-0013](../decisions/0013-dev-main-branch-flow.md)). DB 구조는 supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다.
 
-계획된 작업은 Task 이슈 하나와 PR 하나를 단위로 이 흐름을 거치고, 이슈 없는 작은 수정도 같은 PR 흐름을 거쳐 main에 들어간다([ADR-0012](../decisions/0012-issue-for-planned-work-only.md)). 브랜치 이름, PR 템플릿, 리뷰 절차는 [SDD 가이드](../sdd-guide.md)에서 설명한다. typecheck, lint, test 같은 실행 가능한 검사가 통과 여부를 정한다는 원칙은 [constitution](../constitution.md)에 있다.
+계획된 작업은 Task 이슈 하나와 PR 하나를 단위로 이 흐름을 거치고, 이슈 없는 작은 수정도 같은 PR 흐름을 거쳐 `dev`를 지나 main에 들어간다([ADR-0012](../decisions/0012-issue-for-planned-work-only.md)). 브랜치 이름, PR 템플릿, 리뷰 절차는 [SDD 가이드](../sdd-guide.md)에서 설명한다. typecheck, lint, test 같은 실행 가능한 검사가 통과 여부를 정한다는 원칙은 [constitution](../constitution.md)에 있다.
 
 ## 환경
 
@@ -59,6 +65,7 @@ R0 작업 [#4](https://github.com/god3v/hamtteukka/issues/4)에서 아래와 같
 | 항목 | 값 | 설정 위치 |
 |---|---|---|
 | Root Directory | `apps/web` | Vercel 프로젝트 설정 |
+| Production Branch | `main` | Vercel 프로젝트 설정(기본값). `dev`와 PR은 미리보기 주소에만 배포된다 |
 | Framework Preset | Next.js | Vercel 프로젝트 설정(자동 감지) |
 | Install Command, Build Command | 기본값 | Vercel 프로젝트 설정. pnpm이 루트의 `pnpm-lock.yaml`로 워크스페이스 전체를 설치한다 |
 | Root Directory 밖 파일 포함 | 켬(기본값) | Vercel 프로젝트 설정. `packages/shared`와 루트 lockfile을 쓰기 때문에 반드시 켠다 |
@@ -92,9 +99,32 @@ R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 아래와 같
 
 로컬에서는 `.env.example`을 `apps/web/.env.local`로 복사하고 `pnpm db:status`(`supabase status -o env`)가 출력하는 `API_URL`, `PUBLISHABLE_KEY`, `SECRET_KEY` 값을 채운다. preview와 production의 값은 Vercel 프로젝트의 환경 변수에 넣는다. `SUPABASE_SECRET_KEY`에는 `NEXT_PUBLIC_` 접두사를 붙이지 않으므로 브라우저 번들에 포함되지 않는다([constitution](../constitution.md) P-10).
 
-Supabase CLI 3.1.0은 로컬 스택의 포트를 `0.0.0.0`에 열고 바인딩 주소를 바꾸는 설정을 제공하지 않는다. 그래서 각 개발자가 Docker Desktop의 Docker Engine 설정에 `"ip": "127.0.0.1"`을 넣어 컨테이너 포트를 기본으로 루프백 주소에만 열게 한다. 절차는 [README](../../README.md#시작하기)에 있다.
+Supabase CLI 3.1.0은 로컬 스택의 포트를 기본으로 `0.0.0.0`에 연다. 그래서 `pnpm db:start`와 `pnpm db:reset`은 [scripts/supabase-local.mjs](../../scripts/supabase-local.mjs)를 거쳐, 포트를 `127.0.0.1`에만 여는 Docker 네트워크 `hamtteukka-local`에서 스택을 실행한다. 네트워크가 없으면 스크립트가 `com.docker.network.bridge.host_binding_ipv4=127.0.0.1` 옵션으로 만들고, 같은 이름의 네트워크가 이 옵션 없이 있으면 실행을 멈춘다. Docker Engine 28.0.0 미만은 `127.0.0.1`에 게시한 포트도 같은 L2 구간의 다른 기기가 접근할 수 있으므로 28.0.0 이상을 쓴다([Docker 포트 게시 문서](https://docs.docker.com/engine/network/port-publishing/)).
 
 Supabase는 예전 anon 키와 service-role 키 대신 publishable 키와 secret 키를 쓰도록 안내하므로 새 키 이름을 따랐다([Supabase API 키 문서](https://supabase.com/docs/guides/api/api-keys)).
+
+## CI와 브랜치 보호
+
+R0 작업 [#5](https://github.com/god3v/hamtteukka/issues/5)에서 아래와 같이 정했다. 워크플로는 [.github/workflows/ci.yml](../../.github/workflows/ci.yml)에 있다.
+
+| 항목 | 값 |
+|---|---|
+| 실행 조건 | `dev`나 `main`으로 가는 PR, `dev`와 `main`에 들어온 푸시 |
+| `checks` 작업 | `pnpm install --frozen-lockfile` 뒤 `pnpm typecheck`, `pnpm lint`, `pnpm test`, `node scripts/check-docs.mjs`를 차례로 실행한다 |
+| `release-source` 작업 | `main`으로 가는 PR의 출발 브랜치가 `dev`가 아니면 실패한다([ADR-0013](../decisions/0013-dev-main-branch-flow.md)) |
+| 실행 환경 | ubuntu-latest, Node.js 24, pnpm은 `packageManager` 버전 |
+| 액션 버전 | 태그 대신 커밋 SHA로 고정한다([constitution](../constitution.md) P-14) |
+
+브랜치 보호는 저장소 규칙(ruleset)으로 건다.
+
+| 브랜치 | 규칙 |
+|---|---|
+| `dev` | PR로만 병합한다. `checks` 통과가 필요하다. 강제 푸시와 삭제를 막는다 |
+| `main` | PR로만 병합한다. `checks`와 `release-source` 통과가 필요하다. 강제 푸시와 삭제를 막는다 |
+
+1인 프로젝트라 PR 승인 수는 요구하지 않는다. 저장소 소유자에게도 같은 규칙이 적용되도록 우회 대상을 두지 않는다. 에이전트의 직접 푸시를 막는 [pre-tool-guard](../../.claude/hooks/pre-tool-guard.mjs) 훅은 실수를 줄이는 장치이고, 실제 차단은 이 규칙이 맡는다.
+
+`dev` 병합 뒤 Project Status를 `dev 반영`으로 바꾸는 자동화는 넣지 않았다. 사용자 계정의 Project는 워크플로의 기본 토큰(`GITHUB_TOKEN`)으로 고칠 수 없어, `project` 권한을 가진 개인 토큰을 저장소 Secret에 두어야 하기 때문이다. 지금은 [ADR-0013](../decisions/0013-dev-main-branch-flow.md)대로 사람이 바꾼다.
 
 ## R0에서 확정할 항목
 
@@ -102,8 +132,6 @@ Supabase는 예전 anon 키와 service-role 키 대신 publishable 키와 secret
 
 | 항목 | 정해진 것 | R0에서 확정할 것 |
 |---|---|---|
-| CI 워크플로 | GitHub Actions에서 typecheck, lint, test를 실행한다 | 워크플로 파일 구성, Turborepo 작업 이름, 실행 조건 |
-| 병합 조건 | 소유자가 PR을 리뷰한 뒤 main에 병합한다 | CI 통과를 병합 조건으로 강제하는 브랜치 보호 설정 |
 | 마이그레이션 적용 | supabase/migrations의 SQL을 Supabase CLI로 서울 프로젝트에 적용한다 | 적용 시점과 주체(로컬 실행 또는 CI 작업), 실패 시 처리 |
 | preview 데이터 | PR마다 Vercel preview를 만든다 | preview가 연결할 Supabase 프로젝트와 테스트 데이터 |
 | OAuth 리디렉션 | 카카오·구글 로그인을 쓴다 | 환경별 리디렉션 URL 등록과 로컬 스택의 소셜 로그인 확인 방법 |

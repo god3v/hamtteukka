@@ -16,8 +16,17 @@ describe("getAppInfo", () => {
       name: "함뜨까",
       description: "설명",
       release: "R9",
+      supportEmail: null,
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("문의 메일은 메일 주소 형식이거나 아직 정하지 않은 null만 허용한다", () => {
+    const base = { name: "함뜨까", description: "설명", release: "R0" } as const;
+
+    expect(appInfoSchema.safeParse({ ...base, supportEmail: "help@hamtteukka.kr" }).success).toBe(true);
+    expect(appInfoSchema.safeParse({ ...base, supportEmail: null }).success).toBe(true);
+    expect(appInfoSchema.safeParse({ ...base, supportEmail: "메일 아님" }).success).toBe(false);
   });
 });

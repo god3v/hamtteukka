@@ -105,6 +105,7 @@ stateDiagram-v2
 | ADR-0010 | [카카오페이 흐름 기반 SDD와 다이어그램 중심 설계](0010-sdd-diagram-first.md) | 확정 | 2026-11-18 |
 | ADR-0011 | [GitHub Issues·Projects로 업무 관리](0011-github-issues-projects.md) | 확정 | 2026-11-18 |
 | ADR-0012 | [계획된 작업만 이슈로 관리](0012-issue-for-planned-work-only.md) | 확정 | 2026-11-18 |
+| ADR-0013 | [dev 브랜치에서 확인하고 main 병합으로 배포](0013-dev-main-branch-flow.md) | 확정 | 2026-11-18 |
 
 ## 미결정 항목
 

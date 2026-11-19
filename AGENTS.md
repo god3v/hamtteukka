@@ -25,7 +25,7 @@
 | `pnpm build` | 프로덕션 빌드 |
 | `pnpm typecheck` | 타입 검사 (`apps/web`은 `next typegen` 뒤 `tsc --noEmit`) |
 | `pnpm lint` | ESLint 검사 |
-| `pnpm test` | Vitest 테스트 |
+| `pnpm test` | 테스트. `packages/shared`는 Vitest, `apps/web`은 Node 내장 테스트 러너(`node --test`)로 실행한다 |
 | `pnpm db:start`, `pnpm db:stop` | Supabase 로컬 스택 시작과 종료 (Docker 필요) |
 | `pnpm db:status` | 로컬 스택의 주소와 키 출력 |
 | `pnpm db:reset` | 로컬 DB를 비우고 `supabase/migrations`를 처음부터 다시 적용 |
@@ -40,6 +40,7 @@
 | Node.js | 24.x | `package.json`의 `engines`. Vercel 배포도 같은 버전을 쓴다 |
 | pnpm | 12.21.0 | 루트 `package.json`의 `packageManager` |
 | Next.js / React | 16.4.6 / 19.3.1 | |
+| Tailwind CSS | 4.3.4 | `apps/web`의 스타일. 기본 팔레트를 꺼 두었으므로 색은 `globals.css`의 토큰(`bg-canvas`, `text-ink` 등)으로만 쓰고 `dark:`로 색을 바꾸지 않는다. Tailwind 4 기준 지원 브라우저는 Safari 16.4, Chrome 111 이상이다 |
 | TypeScript | 6.0.3 | typescript-eslint 8.73.0이 6.1 미만만 지원한다 |
 | ESLint | 9.39.5 | eslint-config-next가 쓰는 react, import, jsx-a11y 플러그인이 ESLint 10을 지원하지 않는다 |
 | zod / Vitest / Turborepo | 4.6.7 / 5.1.0 / 2.11.11 | |
@@ -84,7 +85,7 @@ scripts/           저장소 검사 스크립트
 - RLS 정책을 추가하거나 바꾸면 해당 기능의 `design/erd.md` 정책 표를 함께 고친다 ([ADR-0004](docs/decisions/0004-rls-authorization.md)).
 - 이메일을 회원 식별 키로 쓰지 않는다 ([ADR-0005](docs/decisions/0005-auth-supabase-social-login.md)).
 - 구매 대금을 운영자 계좌로 받아 작가에게 보내는 흐름을 만들지 않는다 ([ADR-0009](docs/decisions/0009-payout-via-pg.md)).
-- 계획된 작업(Task 이슈)은 PR 하나로 끝낸다 ([ADR-0011](docs/decisions/0011-github-issues-projects.md)). 문서 문구나 설정 같은 작은 수정은 이슈 없이 열려 있는 관련 PR에 함께 넣거나, 이슈 없는 PR로 처리한다 ([ADR-0012](docs/decisions/0012-issue-for-planned-work-only.md)). 어떤 경우든 main에 직접 커밋하지 않는다.
+- 계획된 작업(Task 이슈)은 PR 하나로 끝낸다 ([ADR-0011](docs/decisions/0011-github-issues-projects.md)). PR은 `dev`로 보낸다 ([ADR-0013](docs/decisions/0013-dev-main-branch-flow.md)). 문서 문구나 설정 같은 작은 수정은 이슈 없이 열려 있는 관련 PR에 함께 넣거나, 이슈 없는 PR로 처리한다 ([ADR-0012](docs/decisions/0012-issue-for-planned-work-only.md)). 어떤 경우든 `dev`와 `main`에 직접 커밋하지 않는다.
 - 설계를 바꿔야 하면 코드나 이슈를 먼저 고치지 않는다. 요구사항이나 설계 문서를 먼저 고친 뒤 아래 단계를 다시 만든다.
 - 비밀 값(API 키, OAuth client secret, service-role 키, `.env` 파일)은 만들거나 커밋하지 않는다. 필요한 키 이름은 `.env.example`에 적는다 (헌법 P-10).
 
@@ -99,7 +100,9 @@ scripts/           저장소 검사 스크립트
 
 - 에이전트는 브랜치를 만들거나, 커밋하거나, PR을 열거나 PR 제목과 본문을 고치기 전에 사용할 이름과 문장을 사용자에게 먼저 보여 주고 승인을 받는다. 사용자가 이름이나 문체를 고치면 고친 내용을 그대로 쓴다. 승인은 보여 준 그 브랜치, 커밋, PR에만 해당하며, 같은 PR에 커밋을 더할 때도 커밋 메시지를 다시 확인받는다.
 - 브랜치 이름: 이슈가 있으면 `feat/<이슈번호>-<요약>`, `fix/<이슈번호>-<요약>`, `docs/<이슈번호>-<요약>`을 쓰고, 이슈 없는 PR은 `docs/<요약>`, `chore/<요약>`처럼 이슈 번호를 빼고 쓴다.
-- `main`에 직접 커밋하거나 푸시하지 않는다. `--no-verify`로 git 훅을 건너뛰지 않는다.
+- 작업 브랜치는 `dev`에서 만들고, PR은 `dev`로 보낸다(`gh pr create --base dev`). `dev`에서 확인한 변경만 `dev → main` 릴리스 PR로 `main`에 병합하며, `main` 병합만 운영 사이트에 배포된다 ([ADR-0013](docs/decisions/0013-dev-main-branch-flow.md)).
+- 이슈는 `main`에 병합될 때 닫힌다. 작업 PR을 `dev`에 병합하면 Project의 Status를 `dev 반영`으로 바꾸고, 릴리스 PR 본문에는 포함된 이슈를 모두 `Closes #N`으로 적는다. 릴리스 PR은 "Create a merge commit"으로 병합한다.
+- `dev`와 `main`에 직접 커밋하거나 푸시하지 않는다. `--no-verify`로 git 훅을 건너뛰지 않는다.
 - 커밋 메시지는 Conventional Commits 접두어와 한국어 요약으로 쓴다. 예: `feat: 단수 카운터 리셋 확인 추가 (#12)`
 - PR 본문은 [PR 템플릿](.github/pull_request_template.md)의 8개 절을 모두 채운다. 이슈가 있으면 첫 줄에 `Closes #<이슈 번호>`를 적고, 이슈 없이 함께 넣은 작은 수정은 "어떻게 해결했나요?" 절에 따로 적는다.
 - PR 본문은 동료에게 설명하듯 합쇼체의 짧은 문장으로 쓴다. 자세한 작성 기준은 [sdd-implement](.claude/skills/sdd-implement/SKILL.md)의 10단계에 있다.
@@ -116,7 +119,7 @@ scripts/           저장소 검사 스크립트
 
 ## GitHub
 
-- 저장소: `god3v/hamtteukka`, 기본 브랜치 `main`
-- Project 보드: `함뜨까`, 번호 5 (`gh project ... 5 --owner @me`). 필드: Status, SDD 단계, Size, Iteration
+- 저장소: `god3v/hamtteukka`, 기본 브랜치 `main`, 통합 브랜치 `dev`
+- Project 보드: `함뜨까`, 번호 5 (`gh project ... 5 --owner @me`). 필드: Status(Todo, In Progress, dev 반영, Done), SDD 단계, Size, Iteration
 - 마일스톤: R0 기반, R1 MVP, R1+ 도구 보강, R2 무료 도안 배포, R3 커뮤니티, R4 유료 판매, A1 앱
 - Windows에서 `gh`가 PATH에 없으면 `C:\Program Files\GitHub CLI\gh.exe`를 쓴다.
