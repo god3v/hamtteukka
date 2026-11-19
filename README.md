@@ -37,7 +37,7 @@
 
 | 영역 | 기술 |
 |---|---|
-| 웹 | Next.js 16 (App Router), React 19, TypeScript |
+| 웹 | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4 |
 | 데이터·인증·파일 | Supabase (Postgres, Auth, Storage, RLS) |
 | 공통 로직 | `packages/shared`: zod DTO와 데이터 접근 함수 |
 | 배포 | Vercel 서울 리전(icn1), Supabase 서울 리전(ap-northeast-2) |
@@ -74,7 +74,7 @@ pnpm dev
 | `pnpm build` | 프로덕션 빌드 |
 | `pnpm typecheck` | 타입 검사 |
 | `pnpm lint` | ESLint 검사 |
-| `pnpm test` | Vitest 테스트 |
+| `pnpm test` | 테스트. `packages/shared`는 Vitest, `apps/web`은 Node 내장 테스트 러너(`node --test`)로 실행한다 |
 | `pnpm db:start`, `pnpm db:stop` | Supabase 로컬 스택 시작과 종료 |
 | `pnpm db:status` | 로컬 스택의 주소와 키 출력 |
 | `pnpm db:reset` | 로컬 DB를 비우고 마이그레이션을 처음부터 다시 적용 |
