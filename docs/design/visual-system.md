@@ -53,6 +53,7 @@ updated: 2026-11-19
 | 라이트 | `secondary` | `surface` | 7.46 |
 | 라이트 | `muted` | `surface` | 4.95 |
 | 라이트 | `muted` | `surface-muted` | 4.59 |
+| 라이트 | `secondary` | `surface-muted` | 6.90 |
 | 라이트 | `accent` | `surface` | 4.95 |
 | 라이트 | `on-accent` | `accent` | 4.95 |
 | 라이트 | `accent-strong` | `accent-soft` | 5.51 |
@@ -65,6 +66,7 @@ updated: 2026-11-19
 | 다크 | `secondary` | `surface` | 8.68 |
 | 다크 | `muted` | `surface` | 5.27 |
 | 다크 | `muted` | `surface-muted` | 4.80 |
+| 다크 | `secondary` | `surface-muted` | 7.90 |
 | 다크 | `accent` | `surface` | 6.99 |
 | 다크 | `on-accent` | `accent` | 7.08 |
 | 다크 | `accent-strong` | `accent-soft` | 7.01 |
@@ -148,12 +150,13 @@ updated: 2026-11-19
 
 | 프로젝트 상태 | 바탕 | 글자 |
 |---|---|---|
+| 뜰 예정 | `surface-muted` | `secondary` |
 | 진행 중 | `accent-soft` | `accent-strong` |
 | 완성 | 없음, `line` 테두리 | `success` |
 | 휴면 | 없음, `line` 테두리 | `secondary` |
 | 풀었음 | 없음, `line` 테두리 | `muted` |
 
-프로젝트 상태 네 가지는 [002 요구사항](../specs/002-projects/requirements.md)의 FR-04가 정한다. 진행 중 상태만 바탕을 채워서, 지금 뜨고 있는 작품이 목록에서 먼저 눈에 띄게 한다.
+프로젝트 상태 다섯 가지는 [002 요구사항](../specs/002-projects/requirements.md)의 FR-04가 정한다. 진행 중은 강조 색 바탕으로 채워서 지금 뜨고 있는 작품이 목록에서 먼저 눈에 띄게 하고, 뜰 예정은 회색 바탕으로 채워서 아직 시작하지 않은 작품임을 구분한다.
 
 ## 움직임
 
