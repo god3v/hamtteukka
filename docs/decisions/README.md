@@ -122,7 +122,7 @@ OD 번호도 다시 쓰지 않는다. 항목을 정하면 행을 지우지 않�
 | OD-04 | 사업자등록은 언제 할까? | R1 공개 출시 시점 / R4 유료 판매 직전 (Vercel Hobby 비상업 조건과 연결) | R1 공개 출시 전 | [ADR-0002](0002-stack-nextjs-supabase-vercel.md), [로드맵](../product/roadmap.md) |
 | OD-05 | 내 도안함의 다운로드 기간을 둘까? | 무기한 / 12개월 | R2 착수 전 | [ADR-0007](0007-sales-ready-data-model.md), [참고 서비스 조사](../research/2026-11-18-reference-services.md) |
 | OD-06 | 도안 영상은 어떻게 받을까? | 외부 URL만 허용 / 직접 호스팅 | R2 착수 전 | [기능 목록](../product/feature-catalog.md), [스택 조사](../research/2026-11-18-stack-options.md) |
-| OD-07 | 비회원도 검색할 수 있게 할까? | 비회원 허용 / 회원 전용 | R2 착수 전 | [기능 목록](../product/feature-catalog.md) |
+| OD-07 | 비회원도 검색할 수 있게 할까? | 비회원 허용 / 회원 전용 | 결정됨 (2026-11-19) | [기능 목록](../product/feature-catalog.md)의 이용 대상별 분류. 비회원도 도안을 둘러보고 검색하며, 받기·찜·후기·문의 작성은 회원만 한다 |
 | OD-08 | 한국어 검색 엔진은 무엇으로 할까? | PGroonga와 pg_trgm을 실측한 뒤 선택 / 품질이 부족하면 Meilisearch | R2 착수 전 | [스택 조사](../research/2026-11-18-stack-options.md) |
 | OD-09 | 커뮤니티 작성자를 어떻게 표시할까? | 완전 익명 / 닉네임 | R3 착수 전 | [참고 서비스 조사](../research/2026-11-18-reference-services.md) |
 | OD-10 | 탈퇴한 회원의 게시물을 어떻게 처리할까? | 모두 삭제 / 내용만 지우고 자리 표시 유지 | R3 착수 전 | [앱스토어 정책 조사](../research/2026-11-18-app-store-policy.md) |
