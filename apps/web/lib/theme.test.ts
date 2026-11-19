@@ -1,5 +1,6 @@
 // 화면 모드 규칙과 <head> 스크립트를 확인한다. Node 내장 테스트 러너로 실행한다: node --test
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import vm from "node:vm";
 
@@ -217,6 +218,34 @@ test("스크립트와 applyTheme은 모든 경우에 같은 결과를 낸다", (
       );
     }
   }
+});
+
+// globals.css에서 선택자 블록 하나의 --hm-* 토큰을 읽는다. 토큰 블록에는 중괄호가 중첩되지 않는다.
+const globalsCss = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+
+function readTokens(selector: string): Map<string, string> {
+  const start = globalsCss.indexOf(`${selector} {`);
+  assert.notEqual(start, -1, `globals.css에 ${selector} 블록이 없다`);
+  const block = globalsCss.slice(start, globalsCss.indexOf("}", start));
+  return new Map(
+    [...block.matchAll(/(--hm-[a-z-]+):\s*([^;]+);/g)].map(([, name = "", value = ""]) => [name, value.trim()]),
+  );
+}
+
+test("라이트와 다크 토큰은 같은 이름을 모두 정의한다", () => {
+  const light = readTokens(":root");
+  const dark = readTokens('[data-theme="dark"]');
+  assert.ok(light.size > 0);
+  assert.deepEqual([...dark.keys()].sort(), [...light.keys()].sort());
+});
+
+test("JavaScript가 꺼진 환경의 다크 대체 토큰은 data-theme 다크 토큰과 같다", () => {
+  assert.deepEqual(readTokens(":root:not([data-theme])"), readTokens('[data-theme="dark"]'));
+});
+
+test("주소창 색은 globals.css의 surface 토큰과 같다", () => {
+  assert.equal(readTokens(":root").get("--hm-surface"), THEME_COLORS.light);
+  assert.equal(readTokens('[data-theme="dark"]').get("--hm-surface"), THEME_COLORS.dark);
 });
 
 test("resolveTheme과 isThemePreference는 정한 값만 받아들인다", () => {

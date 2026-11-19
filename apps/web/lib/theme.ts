@@ -5,8 +5,11 @@
 export const THEME_STORAGE_KEY = "hamtteukka-theme";
 export const THEME_PREFERENCES = ["light", "dark", "system"] as const;
 export const DARK_MEDIA_QUERY = "(prefers-color-scheme: dark)";
-/** 휴대폰 브라우저 주소창 색. globals.css의 --hm-canvas와 같은 값이다. */
-export const THEME_COLORS = { light: "#faf6f0", dark: "#1c1917" } as const;
+/**
+ * 휴대폰 브라우저 주소창 색. globals.css의 --hm-surface와 같은 값이다.
+ * 휴대폰에서는 가운데 열이 화면 너비를 모두 채우므로 주소창 아래에 보이는 바탕이 surface다.
+ */
+export const THEME_COLORS = { light: "#ffffff", dark: "#171514" } as const;
 
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 export type Theme = keyof typeof THEME_COLORS;
