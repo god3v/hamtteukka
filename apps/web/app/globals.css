@@ -142,8 +142,8 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    /* 위쪽에 고정한 앱 바(50px) 밑으로 앵커 대상이 가리지 않게 한다. */
-    scroll-padding-top: 3.5rem;
+    /* 위쪽에 고정한 앱 바(위쪽 안전 영역 + 50px) 밑으로 앵커 대상이 가리지 않게 한다. */
+    scroll-padding-top: calc(3.5rem + env(safe-area-inset-top));
   }
 
   /* body는 넓은 화면에서 가운데 열 바깥에 보이는 바탕이다. 가운데 열은 layout.tsx에서 surface로 칠한다. */

@@ -17,26 +17,29 @@ type ScreenProps = {
  * - 홈은 왼쪽에 워드마크를 둔다.
  * - 탭의 첫 화면은 왼쪽에 title-1 제목을 둔다.
  * - 하위 화면은 왼쪽에 뒤로 버튼을 두고 그 옆에 제목을 둔다.
+ * layout.tsx가 viewport-fit=cover를 쓰므로, 앱 바는 위쪽 안전 영역만큼 내려 앉히고 내용 높이 50px은 그 아래에 둔다.
  */
 export function Screen({ title, backHref, children }: ScreenProps) {
   return (
     <>
-      <header className="sticky top-0 z-10 flex h-12.5 items-center gap-1 bg-surface px-4">
-        {backHref ? (
-          <Link
-            href={backHref}
-            aria-label="뒤로"
-            className="-ml-3 inline-flex size-11 items-center justify-center rounded-md text-ink"
-          >
-            <ChevronLeft aria-hidden="true" size={20} strokeWidth={1.75} />
-          </Link>
-        ) : null}
-        {title ? (
-          <h1 className={backHref ? "text-title-2" : "text-title-1"}>{title}</h1>
-        ) : (
-          // 워드마크는 Pretendard ExtraBold(800)로 쓴 서비스 이름이다(docs/design/brand.md).
-          <span className="text-title-1 font-extrabold">{getAppInfo().name}</span>
-        )}
+      <header className="sticky top-0 z-10 bg-surface pt-[env(safe-area-inset-top)]">
+        <div className="flex h-12.5 items-center gap-1 px-4">
+          {backHref ? (
+            <Link
+              href={backHref}
+              aria-label="뒤로"
+              className="-ml-3 inline-flex size-11 items-center justify-center rounded-md text-ink"
+            >
+              <ChevronLeft aria-hidden="true" size={20} strokeWidth={1.75} />
+            </Link>
+          ) : null}
+          {title ? (
+            <h1 className={backHref ? "text-title-2" : "text-title-1"}>{title}</h1>
+          ) : (
+            // 워드마크는 Pretendard ExtraBold(800)로 쓴 서비스 이름이다(docs/design/brand.md).
+            <span className="text-title-1 font-extrabold">{getAppInfo().name}</span>
+          )}
+        </div>
       </header>
       <main id="main" className="flex flex-1 flex-col px-4 pb-8">
         {children}
