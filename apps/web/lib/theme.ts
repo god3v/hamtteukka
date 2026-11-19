@@ -41,6 +41,9 @@ export function applyTheme(root: HTMLElement, preference: ThemePreference, syste
  * - 기기 설정이 바뀌면 지금 페이지에서 고른 값(data-theme-preference)을 기준으로 다시 그린다.
  *   그래서 저장에 실패한 환경에서도 방금 고른 값이 예전 저장값에 덮이지 않는다.
  * - JavaScript가 꺼져 있으면 globals.css의 prefers-color-scheme 대체 규칙이 시스템 모드처럼 그린다.
+ * - Next.js는 페이지를 이동할 때 <head>의 theme-color 태그를 viewport 기본값으로 다시 그린다.
+ *   그래서 <head>를 지켜보다가 태그가 새로 생기거나 값이 바뀌면 지금 모드의 색으로 다시 맞춘다.
+ *   이미 같은 값인 태그는 건드리지 않아야 이 감시가 자기 변경에 다시 반응하지 않는다.
  * applyTheme, resolveTheme과 같은 규칙이며 lib/theme.test.ts가 두 구현이 같은 결과를 내는지 확인한다.
  */
 export const themeInitScript = `(function () {
@@ -51,13 +54,19 @@ export const themeInitScript = `(function () {
     var valid = function (value) {
       return value === "light" || value === "dark" ? value : "system";
     };
+    var syncThemeColor = function () {
+      var color = colors[root.dataset.theme === "dark" ? "dark" : "light"];
+      var metas = document.querySelectorAll('meta[name="theme-color"]');
+      for (var i = 0; i < metas.length; i++) {
+        if (metas[i].getAttribute("content") !== color) metas[i].setAttribute("content", color);
+      }
+    };
     var apply = function (preference) {
       var theme = preference === "system" ? (media.matches ? "dark" : "light") : preference;
       root.dataset.theme = theme;
       root.dataset.themePreference = preference;
       root.style.colorScheme = theme;
-      var metas = document.querySelectorAll('meta[name="theme-color"]');
-      for (var i = 0; i < metas.length; i++) metas[i].setAttribute("content", colors[theme]);
+      syncThemeColor();
     };
     var stored = null;
     try {
@@ -67,5 +76,13 @@ export const themeInitScript = `(function () {
     media.addEventListener("change", function () {
       apply(valid(root.dataset.themePreference));
     });
+    if (typeof MutationObserver === "function") {
+      new MutationObserver(syncThemeColor).observe(document.head, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["content"],
+      });
+    }
   } catch (error) {}
 })();`;

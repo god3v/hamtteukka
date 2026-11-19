@@ -16,7 +16,8 @@ export const metadata: Metadata = {
   description: appInfo.description,
 };
 
-// 휴대폰 브라우저 주소창 색을 화면 바탕색에 맞춘다. 직접 고른 모드는 <head>의 스크립트가 다시 맞춘다.
+// 휴대폰 브라우저 주소창 색을 화면 바탕색에 맞춘다. 직접 고른 모드는 <head>의 스크립트가 다시 맞추고,
+// 페이지를 이동해 Next.js가 이 태그를 기본값으로 다시 그려도 스크립트가 고른 모드의 색으로 되돌린다.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

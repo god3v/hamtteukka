@@ -13,18 +13,46 @@ import {
   type ThemePreference,
 } from "./theme.ts";
 
-type FakeMeta = { content: string; setAttribute: (name: string, value: string) => void };
+type FakeMeta = {
+  name: string;
+  content: string;
+  getAttribute: (name: string) => string | null;
+  setAttribute: (name: string, value: string) => void;
+};
 type FakeRoot = { dataset: Record<string, string>; style: { colorScheme?: string }; ownerDocument: unknown };
 
+function fakeMeta(name: string, content: string): FakeMeta {
+  const meta: FakeMeta = {
+    name,
+    content,
+    getAttribute: (attribute) => (attribute === "content" ? meta.content : null),
+    setAttribute: (attribute, value) => {
+      if (attribute === "content") meta.content = value;
+    },
+  };
+  return meta;
+}
+
+// theme-color 태그 두 개와, 바뀌면 안 되는 description 태그 하나를 둔다.
 function fakeMetas(): FakeMeta[] {
-  return [THEME_COLORS.light, THEME_COLORS.dark].map((content) => {
-    const meta: FakeMeta = { content, setAttribute: (_name, value) => (meta.content = value) };
-    return meta;
-  });
+  return [
+    fakeMeta("theme-color", THEME_COLORS.light),
+    fakeMeta("theme-color", THEME_COLORS.dark),
+    fakeMeta("description", "함뜨까"),
+  ];
+}
+
+// 실제 문서처럼 선택자에 맞는 태그만 돌려준다. 선택자 이름이 틀리면 아무 태그도 돌려주지 않는다.
+function fakeQuerySelectorAll(metas: FakeMeta[]) {
+  return (selector: string) => {
+    const match = /^meta\[name="([^"]+)"\]$/.exec(selector);
+    if (!match) throw new Error(`테스트가 지원하지 않는 선택자: ${selector}`);
+    return metas.filter((meta) => meta.name === match[1]);
+  };
 }
 
 function fakeRoot(metas: FakeMeta[]): FakeRoot {
-  return { dataset: {}, style: {}, ownerDocument: { querySelectorAll: () => metas } };
+  return { dataset: {}, style: {}, ownerDocument: { querySelectorAll: fakeQuerySelectorAll(metas) } };
 }
 
 // 브라우저 대신 쓰는 가짜 환경. 저장된 값, 기기의 다크 설정, localStorage 사용 가능 여부를 바꿔 가며 스크립트를 실행한다.
@@ -35,9 +63,22 @@ function runInitScript(options: { stored?: string | null; systemDark?: boolean; 
   const media = { matches: options.systemDark ?? false, addEventListener: (_: string, fn: () => void) => listeners.push(fn) };
   const store = new Map<string, string>();
   if (options.stored != null) store.set(THEME_STORAGE_KEY, options.stored);
+  const head = {};
+  // 스크립트가 <head>를 지켜보는지 확인하려고, 감시 대상과 조건을 기록하는 가짜 MutationObserver를 둔다.
+  const observers: Array<{ target: unknown; options: unknown; callback: () => void }> = [];
+  class FakeMutationObserver {
+    callback: () => void;
+    constructor(callback: () => void) {
+      this.callback = callback;
+    }
+    observe(target: unknown, observeOptions: unknown) {
+      observers.push({ target, options: observeOptions, callback: this.callback });
+    }
+  }
   const context = {
-    document: { documentElement: root, querySelectorAll: () => metas },
+    document: { documentElement: root, head, querySelectorAll: fakeQuerySelectorAll(metas) },
     window: { matchMedia: () => media },
+    MutationObserver: FakeMutationObserver,
     localStorage: {
       getItem: (key: string) => {
         if (options.storageThrows) throw new Error("SecurityError");
@@ -46,7 +87,15 @@ function runInitScript(options: { stored?: string | null; systemDark?: boolean; 
     },
   };
   vm.runInNewContext(themeInitScript, context);
-  return { root, metas, media, fireSystemChange: () => listeners.forEach((fn) => fn()) };
+  return {
+    root,
+    metas,
+    media,
+    head,
+    observers,
+    fireSystemChange: () => listeners.forEach((fn) => fn()),
+    fireHeadChange: () => observers.forEach((observer) => observer.callback()),
+  };
 }
 
 function snapshot(root: FakeRoot, metas: FakeMeta[]) {
@@ -72,12 +121,55 @@ test("저장한 값이 올바르지 않으면 시스템 모드로 본다", () =>
   assert.equal(root.dataset.theme, "dark");
 });
 
-test("주소창 색(theme-color)도 실제로 그리는 모드를 따른다", () => {
-  const { metas } = runInitScript({ stored: "dark", systemDark: false });
+test("주소창 색(theme-color)도 실제로 그리는 모드를 따르고, 다른 메타 태그는 바꾸지 않는다", () => {
+  const expected = [THEME_COLORS.dark, THEME_COLORS.dark, "함뜨까"];
+
+  const fromScript = runInitScript({ stored: "dark", systemDark: false });
+  assert.deepEqual(
+    fromScript.metas.map((meta) => meta.content),
+    expected,
+  );
+
+  const metas = fakeMetas();
+  applyTheme(fakeRoot(metas) as unknown as HTMLElement, "dark", false);
   assert.deepEqual(
     metas.map((meta) => meta.content),
-    [THEME_COLORS.dark, THEME_COLORS.dark],
+    expected,
   );
+});
+
+test("페이지 이동 뒤 주소창 색 태그가 기본값으로 다시 그려져도 고른 모드의 색으로 되돌린다", () => {
+  // 기기는 라이트, 사용자는 다크를 고른 상태
+  const env = runInitScript({ stored: "dark", systemDark: false });
+  assert.equal(env.observers.length, 1);
+  assert.equal(env.observers[0]?.target, env.head);
+
+  // Next.js가 페이지를 이동하며 viewport 태그를 기본값으로 바꾸고, 같은 태그를 하나 더 만든 상황
+  const lightMeta = env.metas[0];
+  assert.ok(lightMeta);
+  lightMeta.content = THEME_COLORS.light;
+  env.metas.splice(2, 0, fakeMeta("theme-color", THEME_COLORS.light));
+  env.fireHeadChange();
+
+  assert.deepEqual(
+    env.metas.map((meta) => meta.content),
+    [THEME_COLORS.dark, THEME_COLORS.dark, THEME_COLORS.dark, "함뜨까"],
+  );
+});
+
+test("주소창 색을 다시 맞출 때 이미 같은 값인 태그는 건드리지 않는다", () => {
+  // 값을 바꿀 때마다 MutationObserver가 다시 불리므로, 같은 값을 다시 쓰면 무한히 반복된다.
+  const env = runInitScript({ stored: "dark", systemDark: false });
+  let writes = 0;
+  for (const meta of env.metas) {
+    const original = meta.setAttribute;
+    meta.setAttribute = (attribute, value) => {
+      writes += 1;
+      original(attribute, value);
+    };
+  }
+  env.fireHeadChange();
+  assert.equal(writes, 0);
 });
 
 test("시스템 모드에서는 기기 설정이 바뀌면 따라가고, 고정한 모드는 따라가지 않는다", () => {
