@@ -1,7 +1,7 @@
 ---
 doc_type: reference
 status: active
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
 # 문서 지도
@@ -19,9 +19,11 @@ flowchart TD
     guide -->|"절차"| specs
     specs -->|"Task 이슈"| github["GitHub Issues·Projects"]
     architecture["architecture/ 시스템 다이어그램"] <-->|"설계 시 갱신"| specs
+    decisions -->|"디자인 방향"| design["design/ 화면 규칙"]
+    design -->|"화면 배치 기준"| specs
 ```
 
-조사 기록이 결정의 근거가 되고, 결정은 헌법과 진행 절차로 이어진다. 기능 명세는 로드맵이 정한 범위 안에서 작성하며, 설계 단계에서 아키텍처 다이어그램을 함께 갱신한다.
+조사 기록이 결정의 근거가 되고, 결정은 헌법과 진행 절차로 이어진다. 기능 명세는 로드맵이 정한 범위 안에서 작성하며, 설계 단계에서 아키텍처 다이어그램을 함께 갱신한다. 기능의 화면 설계는 `design/` 문서가 정한 공통 화면 규칙을 따른다.
 
 ## 폴더별 역할
 
@@ -32,6 +34,7 @@ flowchart TD
 | [product/](product/) | 제품 방향, 출시 로드맵, 기능 목록 | `active` | 출시 범위나 기능 배정이 바뀔 때 |
 | [decisions/](decisions/README.md) | ADR과 미결정 항목 | ADR별 `accepted` 등 | 새 결정을 내리거나 기존 결정을 대체할 때 |
 | [architecture/](architecture/) | 시스템 구성, 모노레포, 도메인, 전체 ERD, 배포 | `active` | `/sdd-design` 단계에서 |
+| [design/](design/) | 브랜드와 말투, 화면 구조, 비주얼 시스템, R1 핵심 화면 | `active` | 공통 화면 규칙이나 탭 구성을 바꿀 때 |
 | [research/](research/) | 날짜가 붙은 조사 기록 | `record` | 고치지 않는다. 새 조사는 새 파일로 남긴다 |
 | [specs/](specs/) | 기능별 요구사항과 설계 다이어그램 | `review`, `approved` | SDD 단계마다 |
 
@@ -40,6 +43,7 @@ flowchart TD
 | 하려는 일 | 먼저 읽을 문서 | 고칠 문서 |
 |---|---|---|
 | 새 기능 개발 | [sdd-guide.md](sdd-guide.md), [product/roadmap.md](product/roadmap.md) | `specs/NNN-*/` |
+| 화면 설계와 구현 | [design/information-architecture.md](design/information-architecture.md), [design/visual-system.md](design/visual-system.md), [design/brand.md](design/brand.md) | `specs/NNN-*/design/screens.md`, 공통 규칙을 바꾸면 `design/` |
 | 결정 배경 확인 | [decisions/README.md](decisions/README.md) | 없음 |
 | 새 결정 기록 | [decisions/README.md](decisions/README.md)의 작성 규칙 | 새 ADR 파일, 필요하면 [constitution.md](constitution.md) |
 | 출시 범위 조정 | [product/roadmap.md](product/roadmap.md), [product/feature-catalog.md](product/feature-catalog.md) | 두 문서와 GitHub 마일스톤 |

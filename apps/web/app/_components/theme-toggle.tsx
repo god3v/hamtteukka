@@ -41,21 +41,22 @@ function choose(next: ThemePreference) {
   applyTheme(document.documentElement, next, window.matchMedia(DARK_MEDIA_QUERY).matches);
 }
 
-/** 화면 모드를 고르는 라디오 버튼 묶음. */
+/**
+ * 화면 모드를 고르는 라디오 버튼 묶음. 내 정보 화면의 설정 구역에 둔다.
+ * 고른 항목은 강조 색이 아니라 선택된 필터 칩처럼 ink 바탕과 surface 글자로 그린다(docs/design/visual-system.md).
+ */
 export function ThemeToggle() {
   const preference = useSyncExternalStore(subscribe, getPreference, getServerPreference);
 
   return (
-    <fieldset className="flex flex-wrap items-center gap-2">
+    <fieldset className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
       <legend className="sr-only">화면 모드</legend>
-      <span aria-hidden="true" className="text-sm text-muted">
-        화면 모드
-      </span>
-      <div className="inline-flex rounded-full border border-line bg-surface p-0.5">
+      <span aria-hidden="true">화면 모드</span>
+      <div className="inline-flex rounded-full border border-line p-0.5">
         {OPTIONS.map((option) => (
           <label
             key={option.value}
-            className="cursor-pointer rounded-full px-3 py-1.5 text-sm text-muted has-checked:bg-accent has-checked:text-on-accent has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink"
+            className="inline-flex min-h-11 min-w-14 cursor-pointer items-center justify-center rounded-full px-3 text-label text-secondary has-checked:bg-ink has-checked:text-surface has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus"
           >
             <input
               type="radio"

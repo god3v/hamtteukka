@@ -13,6 +13,7 @@
 | 3 | [docs/decisions/README.md](docs/decisions/README.md) | 확정된 결정과 아직 정하지 않은 항목 |
 | 4 | [docs/product/roadmap.md](docs/product/roadmap.md) | 지금 진행 중인 출시 단계와 범위 |
 | 5 | 작업 대상 `docs/specs/NNN-*/` | 요구사항과 설계 다이어그램 |
+| 6 | 화면 작업이면 [docs/design/](docs/design/) | 탭 구성, 색 토큰, 컴포넌트, 화면 문구의 공통 규칙 |
 
 ## 명령
 
