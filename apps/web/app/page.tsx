@@ -2,29 +2,35 @@ import Link from "next/link";
 
 import { getAppInfo } from "@hamtteukka/shared";
 
+import { Screen } from "./_components/screen";
+
 export default function HomePage() {
   const appInfo = getAppInfo();
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-accent">서비스를 준비하고 있습니다</p>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{appInfo.name}</h1>
-        <p className="text-lg text-muted">{appInfo.description}</p>
+    <Screen>
+      <section aria-labelledby="intro" className="flex flex-col items-start gap-2 pt-4 pb-6">
+        <p className="rounded-sm bg-surface-muted px-1.5 py-0.5 text-micro text-secondary">출시 준비 중</p>
+        <h1 id="intro" className="text-title-1">
+          {appInfo.description}
+        </h1>
+        <p className="text-secondary">
+          뜨개 프로젝트 기록, 단수 카운터, 내 도안 파일 정리를 휴대폰에서 바로 쓸 수 있게 준비하고 있어요.
+        </p>
       </section>
 
-      <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-        <h2 className="text-base font-semibold">곧 만날 수 있어요</h2>
-        <p className="mt-2 text-muted">
-          뜨개 프로젝트 기록, 단수 카운터, 내 도안 파일 정리를 휴대폰에서 바로 쓸 수 있도록 준비하고 있습니다.
-        </p>
+      <section aria-labelledby="help" className="flex flex-col items-start gap-2 border-t border-line py-6">
+        <h2 id="help" className="text-title-2">
+          궁금한 점이 있나요?
+        </h2>
+        <p className="text-secondary">서비스 소개, 가입 방법, PDF 도안 저장 방법을 정리해 두었어요.</p>
         <Link
-          href="/support"
-          className="mt-4 inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-medium text-on-accent hover:bg-accent-strong"
+          href="/support#faq"
+          className="mt-2 inline-flex h-11 items-center rounded-md border border-line-strong px-4 font-semibold text-ink"
         >
-          궁금한 점 보기
+          자주 묻는 질문
         </Link>
       </section>
-    </div>
+    </Screen>
   );
 }
