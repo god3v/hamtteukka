@@ -33,7 +33,7 @@ flowchart TD
 | 코드 | 마일스톤 이름 | 범위 | 스펙 폴더 | 기능 수 | 진입 조건 | 완료 조건 |
 |---|---|---|---|---|---|---|
 | R0 | R0 기반 | 모노레포 뼈대, Supabase·Vercel 서울 리전, CI, 화면 틀, 지원 페이지, 계정 | [001-account](../specs/001-account/requirements.md) | 6 | ADR-0001~0011 확정 | 운영 도메인에서 가입, 로그인, 탈퇴가 동작한다 |
-| R1 | R1 MVP | 프로젝트 기록, 위시리스트·큐, 게이지, 단수 카운터(기본·퀵·다중·반복), 내 도안 파일 첨부 | [002-projects](../specs/002-projects/requirements.md), [003-row-counter](../specs/003-row-counter/requirements.md), [004-pattern-files](../specs/004-pattern-files/requirements.md) | 8 | R0 완료 | 2주 비공개 베타 뒤 공개 출시한다 |
+| R1 | R1 MVP | 프로젝트 기록, 뜰 예정 프로젝트, 게이지, 단수 카운터(기본·퀵·다중·반복), 내 도안 파일 첨부 | [002-projects](../specs/002-projects/requirements.md), [003-row-counter](../specs/003-row-counter/requirements.md), [004-pattern-files](../specs/004-pattern-files/requirements.md) | 8 | R0 완료 | 2주 비공개 베타 뒤 공개 출시한다 |
 | R1+ | R1+ 도구 보강 | 타이머, 통계, 웹 PDF 뷰어, 실 보관함, 계산기, 내보내기, 네이버 로그인 | 아직 없음 | 10 | R1 공개 출시 | 항목마다 따로 배포한다 |
 | R2 | R2 무료 도안 배포 | 작가 프로필, 도안 등록·심사, 내 도안함, 업데이트 알림, 검색·필터, 관리자 콘솔 | 아직 없음 | 16 | R1 공개 출시 | 외부 작가의 무료 도안이 공개되고, 받기와 업데이트 알림이 동작한다 |
 | R3 | R3 커뮤니티 | 게시판, 신고·차단·금칙어, 후기, Q&A, 완성작 갤러리, 큐레이션 | 아직 없음 | 15 | R2 완료 | 신고 처리 큐를 운영할 수 있다 |
@@ -82,7 +82,7 @@ flowchart TD
 | ID | 기능 | 담는 곳 |
 |---|---|---|
 | F-PROJ-01 | 뜨개 프로젝트 기록 | [002-projects](../specs/002-projects/requirements.md) |
-| F-PROJ-02 | 위시리스트와 뜰 예정 목록(큐) | [002-projects](../specs/002-projects/requirements.md) |
+| F-PROJ-02 | 뜰 예정 프로젝트 | [002-projects](../specs/002-projects/requirements.md) |
 | F-TOOL-01 | 게이지 기록(세탁 전후) | [002-projects](../specs/002-projects/requirements.md) |
 | F-COUNTER-01 | 단수 카운터 기본 기능 | [003-row-counter](../specs/003-row-counter/requirements.md) |
 | F-COUNTER-02 | 로그인 없이 쓰는 퀵 카운터 | [003-row-counter](../specs/003-row-counter/requirements.md) |
