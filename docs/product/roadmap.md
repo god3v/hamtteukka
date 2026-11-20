@@ -100,7 +100,7 @@ flowchart TD
 - 2주 동안 비공개 베타를 운영한 뒤 공개 출시한다.
 - 공개 출시 때 Vercel Pro(월 $20)와 Supabase Pro(월 $25)로 바꾸며, 합계는 월 약 $45다.
 - Vercel 이용약관은 Hobby 플랜을 개인·비상업 용도로만 허용한다([Vercel 이용약관](https://vercel.com/legal/terms)). Supabase Free는 1주 동안 활동이 없으면 프로젝트를 일시 중지한다([Supabase 요금](https://supabase.com/pricing)).
-- 세 스펙 폴더의 요구사항은 검토 대기 상태이고, 승인된 뒤에 설계를 작성한다.
+- 각 스펙의 설계는 그 스펙의 요구사항이 승인(`status: approved`)된 뒤에 작성한다. 스펙마다 승인 상태가 다르므로 각 요구사항 문서의 `status`를 확인한다.
 
 ### R1+ 도구 보강
 
