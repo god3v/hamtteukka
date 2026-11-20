@@ -145,7 +145,7 @@ classDiagram
 | AuthIdentity | 로그인 수단. (provider, provider_user_id)로 회원을 식별한다 | R0 | 001 design/domain.md |
 | TermsVersion | 이용약관·개인정보 처리방침의 버전 | R0 | 001 design/domain.md |
 | TermsAcceptance | 회원이 동의한 약관 버전과 시각 | R0 | 001 design/domain.md |
-| Project | 뜨개 프로젝트. 위시리스트·큐를 같은 애그리거트로 다룰지는 002 설계에서 정한다 | R1 | 002 design/domain.md |
+| Project | 뜨개 프로젝트. 다음에 뜰 작품은 '뜰 예정' 상태로 다루며, 위시리스트·큐를 따로 두지 않는다(002 Q-08) | R1 | 002 design/domain.md |
 | Gauge | 세탁 전후 게이지 기록 | R1 | 002 design/domain.md |
 | CounterSet | 한 프로젝트의 카운터 묶음. 별도 테이블로 둘지는 003 설계에서 정한다 | R1 | 003 design/domain.md |
 | Counter | 단수 카운터. 1세트당 단수 설정, 주·보조 연결, 카운트 이력을 포함한다 | R1 | 003 design/domain.md |
