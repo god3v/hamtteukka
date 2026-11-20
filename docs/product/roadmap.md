@@ -1,7 +1,7 @@
 ---
 doc_type: reference
 status: active
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # 함뜨까 출시 로드맵
@@ -92,7 +92,7 @@ flowchart TD
 
 **정할 결정**
 
-- [OD-03](../decisions/README.md) 개인 PDF 업로드 용량 한도: 파일당 한도와 회원당 한도를 R1 착수 전에 정한다.
+- [OD-03](../decisions/README.md) 개인 PDF 업로드 용량 한도: 2026-11-20에 [004 요구사항](../specs/004-pattern-files/requirements.md)의 Q-01, Q-02에서 파일당 50MB, 회원당 합계 200MB로 정했다. 회원당 한도는 공개 출시 전에 다시 정한다.
 - [OD-04](../decisions/README.md) 사업자등록 시점: 공개 출시 때 할지 유료 판매 직전에 할지 R1 공개 출시 전에 정한다. 이 결정은 Vercel Hobby의 비상업 이용 조건과 연결된다.
 
 **참고**
