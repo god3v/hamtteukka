@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, X } from "lucide-react";
+import { ChevronRight, Ellipsis, Minus, Sun, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -14,31 +14,39 @@ import {
   type QuickCounterController,
   type ScreenPhase,
 } from "@/lib/quick-counter-controller";
-import { getQuickCounterStore, SERVER_SNAPSHOT } from "@/lib/quick-counter-store";
+import { getQuickCounterStore } from "@/lib/quick-counter-store";
+import { browserWakeLockEnv, createScreenWakeLock, type ScreenWakeLock } from "@/lib/wake-lock";
+
+import { BottomSheet } from "../_components/bottom-sheet";
+import {
+  getCounterFeedback,
+  subscribeNothing,
+  useCounterSupport,
+  useHydrated,
+  useQuickCounterSnapshot,
+} from "../_components/counter-hooks";
+import { CounterSettingsSheet } from "../_components/counter-settings-sheet";
+import { RepeatSheet } from "./repeat-sheet";
 
 const COUNTING: ScreenPhase = { kind: "counting" };
 const UNDO_EXPIRED_MESSAGE = "되돌리지 못했어요. 다른 탭에서 값을 바꿨어요.";
 const TOAST_DURATION = 3_000;
 const CLOCK_INTERVAL = 30_000;
 
-// 저장소는 브라우저에서만 만든다. 서버에서 그릴 때와 하이드레이션 중에는 SERVER_SNAPSHOT을 쓴다.
-const subscribeStore = (listener: () => void) => getQuickCounterStore().subscribe(listener);
-const getStoreSnapshot = () => getQuickCounterStore().getSnapshot();
-const getServerSnapshot = () => SERVER_SNAPSHOT;
-const subscribeNothing = () => () => {};
 const getCountingPhase = () => COUNTING;
+const getInactive = () => false;
 
+type Sheet = "menu" | "repeat" | "settings" | null;
+
+// 저장소, 피드백, 화면 꺼짐 방지는 브라우저에서만 만든다. 서버에서 그릴 때는 null이다.
 function createController(): QuickCounterController | null {
-  return typeof window === "undefined" ? null : createQuickCounterController(getQuickCounterStore());
+  return typeof window === "undefined"
+    ? null
+    : createQuickCounterController(getQuickCounterStore(), undefined, getCounterFeedback());
 }
 
-/** 브라우저에서 저장된 값을 읽기 전에는 false다. 서버 HTML에 0단이 잠깐 보이지 않게 값을 가린다. */
-function useHydrated(): boolean {
-  return useSyncExternalStore(
-    subscribeNothing,
-    () => true,
-    () => false,
-  );
+function createWakeLock(): ScreenWakeLock | null {
+  return typeof window === "undefined" ? null : createScreenWakeLock(browserWakeLockEnv());
 }
 
 /** 지난 시각 표기를 새로 그리기 위한 현재 시각. */
@@ -58,22 +66,41 @@ function prefersReducedMotion(): boolean {
 export function QuickCounterScreen() {
   const router = useRouter();
   const [controller] = useState(createController);
-  const { value, mode } = useSyncExternalStore(subscribeStore, getStoreSnapshot, getServerSnapshot);
+  const [wakeLock] = useState(createWakeLock);
+  const { value, settings, mode } = useQuickCounterSnapshot();
   const phase = useSyncExternalStore(
     controller?.subscribe ?? subscribeNothing,
     controller?.getPhase ?? getCountingPhase,
     getCountingPhase,
   );
+  const keepingScreenOn = useSyncExternalStore(
+    wakeLock?.subscribe ?? subscribeNothing,
+    wakeLock?.isActive ?? getInactive,
+    getInactive,
+  );
+  const support = useCounterSupport();
   const hydrated = useHydrated();
   const now = useNow();
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<Sheet>(null);
 
   useEffect(() => {
     if (toast === null) return;
     const id = setTimeout(() => setToast(null), TOAST_DURATION);
     return () => clearTimeout(id);
   }, [toast]);
+
+  // 설정에서 화면 꺼짐 방지를 켜 두었으면 이 화면을 보는 동안만 요청하고, 화면을 닫으면 푼다(003 NFR-03).
+  useEffect(() => {
+    if (!wakeLock) return;
+    if (settings.keepScreenOn) void wakeLock.enable();
+    else void wakeLock.disable();
+  }, [wakeLock, settings.keepScreenOn]);
+
+  useEffect(() => {
+    return () => void wakeLock?.dispose();
+  }, [wakeLock]);
 
   const rows = formatRows(value.total);
   const position = formatRepeatPosition(getRepeatPosition(value.total, value.setSize));
@@ -118,6 +145,15 @@ export function QuickCounterScreen() {
               <X aria-hidden="true" size={20} strokeWidth={1.75} />
             </button>
             <h1 className="text-center text-title-2">퀵 카운터</h1>
+            <button
+              type="button"
+              aria-label="더 보기"
+              aria-haspopup="dialog"
+              onClick={() => setSheet("menu")}
+              className="-mr-3 inline-flex size-11 items-center justify-center justify-self-end rounded-md text-ink"
+            >
+              <Ellipsis aria-hidden="true" size={20} strokeWidth={1.75} />
+            </button>
           </div>
         </header>
 
@@ -125,12 +161,19 @@ export function QuickCounterScreen() {
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4">
             {/* 상태 줄. 리셋 버튼은 더하기·빼기 버튼과 떨어진 위쪽에 작게 둔다(003 NFR-06).
                 리셋 직후에는 같은 자리의 같은 버튼이 되돌리기로 바뀌어, 확인 창을 닫은 뒤에도 포커스가 남는다. */}
-            <div className="flex h-11 items-center justify-end">
+            <div className="flex h-11 items-center">
+              {/* 화면 꺼짐 방지가 걸려 있는 동안 왼쪽에 표시한다(003 FR-10). */}
+              {keepingScreenOn ? (
+                <p className="flex items-center gap-1 text-caption text-secondary">
+                  <Sun aria-hidden="true" size={14} strokeWidth={1.75} />
+                  화면 꺼짐 방지 중
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={phase.kind === "undo" ? undoReset : () => controller?.requestReset()}
                 aria-label={phase.kind === "undo" ? "리셋 되돌리기" : "카운터 리셋"}
-                className={`-mr-3 inline-flex min-h-11 items-center px-3 text-label ${
+                className={`-mr-3 ml-auto inline-flex min-h-11 items-center px-3 text-label ${
                   phase.kind === "undo" ? "text-ink" : "text-secondary"
                 }`}
               >
@@ -189,6 +232,51 @@ export function QuickCounterScreen() {
         rows={rows}
         onCancel={() => controller?.cancelReset()}
         onConfirm={() => controller?.confirmReset()}
+      />
+
+      <BottomSheet open={sheet === "menu"} onClose={() => setSheet(null)} title="더 보기">
+        <ul className="divide-y divide-line">
+          <li>
+            <button
+              type="button"
+              onClick={() => setSheet("repeat")}
+              className="flex min-h-12 w-full items-center justify-between gap-4 py-3 text-left"
+            >
+              반복 설정
+              <span className="flex items-center gap-1 text-caption text-muted">
+                {value.setSize === null ? "없음" : `${value.setSize}단마다`}
+                <ChevronRight aria-hidden="true" size={18} strokeWidth={1.75} />
+              </span>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setSheet("settings")}
+              className="flex min-h-12 w-full items-center justify-between gap-4 py-3 text-left"
+            >
+              카운터 설정
+              <ChevronRight aria-hidden="true" size={18} strokeWidth={1.75} className="text-muted" />
+            </button>
+          </li>
+        </ul>
+      </BottomSheet>
+
+      <RepeatSheet
+        open={sheet === "repeat"}
+        onClose={() => setSheet(null)}
+        setSize={value.setSize}
+        onSave={(setSize) =>
+          controller ? controller.changeSetSize(setSize) : { ok: false, error: "INVALID_STORED_VALUE" }
+        }
+      />
+
+      <CounterSettingsSheet
+        open={sheet === "settings"}
+        onClose={() => setSheet(null)}
+        settings={settings}
+        support={support}
+        onChange={(patch) => getQuickCounterStore().updateSettings(patch)}
       />
     </div>
   );
