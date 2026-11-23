@@ -68,15 +68,15 @@ classDiagram
   QuickCounterStore --> StorageMode : "uses"
 ```
 
-CounterValue는 카운터 하나의 전체 단수, 1세트당 단수, 마지막으로 센 시각이다. 리셋하면 되돌리기에 쓸 ResetUndo가 생기며, ResetUndo는 화면에만 두고 저장하지 않는다(FR-06). QuickCounterStore는 apps/web이 브라우저 저장소를 다루는 부분이고, 저장소를 쓸 수 없으면 화면을 연 동안만 값을 유지한다(NFR-11).
+CounterValue는 카운터 하나의 전체 단수, 1세트당 단수, 마지막으로 센 시각이다. 리셋하면 되돌리기에 쓸 ResetUndo가 생기며, ResetUndo는 화면에만 두고 저장하지 않는다(FR-06). QuickCounterStore는 apps/web이 브라우저 저장소를 다루는 부분이다. 한 브라우저 탭에는 QuickCounterStore가 하나만 있고, 로그아웃 홈의 퀵 카운터 구역, 퀵 카운터 화면, 이어서 뜨기 바가 모두 이 저장소로 값을 읽고 쓴다. 저장소를 쓸 수 없으면 QuickCounterStore가 탭 안에 둔 메모리 사본 하나에만 값을 두므로, 같은 탭에서 화면을 오가도 값이 이어지고 탭을 닫거나 새로 고침하면 사라진다(NFR-11).
 
 | 클래스 | 뜻 | 저장하는 곳 | 관련 FR |
 |---|---|---|---|
-| CounterValue | 카운터의 전체 단수(0 이상의 정수), 1세트당 단수(없거나 1 이상의 정수), 마지막으로 센 시각 | 브라우저 저장소의 퀵 카운터 항목 | FR-01~FR-04, FR-13, FR-25, FR-26 |
+| CounterValue | 카운터의 전체 단수(0 이상의 정수), 1세트당 단수(없거나 1 이상의 정수), 마지막으로 센 시각 | 브라우저 저장소의 퀵 카운터 항목. 저장소를 쓸 수 없으면 QuickCounterStore가 탭마다 하나 두는 메모리 사본 | FR-01~FR-04, FR-13, FR-25, FR-26 |
 | ResetUndo | 리셋 직전의 전체 단수. 되돌리기 버튼이 보이는 동안만 있다 | 화면 메모리 | FR-05, FR-06 |
 | RepeatPosition | 전체 단수를 'n세트 m단'으로 바꾼 표시 값. 1세트당 단수가 없으면 `NONE`, 전체 단수가 0이면 `NOT_STARTED`다 | 저장하지 않고 계산한다 | FR-25, FR-26 |
 | CounterSettings | 소리 피드백, 진동 피드백, 화면 꺼짐 방지 설정 | 브라우저 저장소의 설정 항목 | FR-09~FR-11 |
-| QuickCounterStore | 두 항목을 읽고 쓰는 apps/web 모듈. 저장 방식은 `PERSISTENT`나 `MEMORY_ONLY`다 | 해당 없음 | FR-13, FR-15, NFR-11 |
+| QuickCounterStore | 두 항목을 읽고 쓰는 apps/web 모듈. 탭마다 하나만 두고 모든 화면이 함께 쓴다. 저장 방식은 `PERSISTENT`나 `MEMORY_ONLY`이며, 실제 쓰기가 실패하면 `MEMORY_ONLY`로 바꾼다 | 해당 없음 | FR-13, FR-15, NFR-11 |
 
 ## shared 함수
 
@@ -152,7 +152,13 @@ counterCore는 `packages/shared/src/counter/`에 두는 순수 함수 모음이�
 | `hamtteukka.quickCounter.v1` | `CounterValueDto`를 JSON으로 저장한다. 예: `{"total":7,"setSize":4,"lastCountedAt":"2026-11-20T12:00:00.000Z"}` | FR-13 |
 | `hamtteukka.counterSettings.v1` | `CounterSettingsDto`를 JSON으로 저장한다 | FR-11 |
 
-두 항목은 localStorage에 둔다. 키 끝의 `v1`은 저장 형식의 버전이며, 형식을 바꾸면 새 키를 쓰고 이전 키의 값을 옮긴다. 같은 브라우저의 다른 탭에서 값이 바뀌면 `storage` 이벤트로 화면 값을 맞춘다.
+두 항목은 localStorage에 둔다. 키 끝의 `v1`은 저장 형식의 버전이며, 형식을 바꾸면 새 키를 쓰고 이전 키의 값을 옮긴다.
+
+같은 브라우저에서 여러 탭을 열어 둘 때는 아래 규칙을 따른다.
+
+- 조작할 때마다 저장소의 최신 값을 다시 읽어 counterCore 함수를 적용하고 바로 쓴다. 읽기, 계산, 쓰기는 한 번의 동기 처리 안에서 끝낸다. 그래서 탭을 오가며 센 조작이 화면에 늦게 반영된 값 때문에 덮어써지지 않고 모두 더해진다.
+- 다른 탭에서 값이 바뀌면 `storage` 이벤트로 화면 값을 맞춘다. 되돌리기 버튼이 보이던 탭은 되돌리기 정보를 버린다([상태 전이](state.md)).
+- 서로 다른 탭에서 거의 같은 순간에 누른 조작까지 탭 사이에서 순서를 맞추지는 않는다. 한 사람이 한 번에 한 화면에서 센다는 전제이며, NFR-02가 다루는 빠른 연속 입력은 한 화면 안의 조작이다.
 
 ## 관련 문서
 
