@@ -32,27 +32,28 @@ sequenceDiagram
   participant Store as 브라우저 저장소
   participant Device as 기기 기능
   User->>Web: +1단 버튼을 누른다
-  Web->>Store: 최신 값을 읽는다
-  Store-->>Web: CounterValueDto
+  alt 저장 방식이 PERSISTENT
+    Web->>Store: 최신 값을 읽는다
+    Store-->>Web: CounterValueDto
+  else 저장 방식이 MEMORY_ONLY
+    Web->>Web: 탭의 메모리 사본을 꺼낸다
+  end
   Web->>Core: increment(value, now)
   Core-->>Web: CounterValueDto
   Web->>Web: 화면 값을 바꾸고 화면 읽기 프로그램에 알린다
-  Web->>Store: hamtteukka.quickCounter.v1에 쓴다
-  alt 저장 방식이 PERSISTENT이고 쓰기에 성공했다
+  alt 저장 방식이 PERSISTENT
+    Web->>Store: hamtteukka.quickCounter.v1에 쓴다
     Store-->>Web: 저장됨
-  else 쓰기에 실패했다
-    Store-->>Web: 예외
-    Web->>Web: 저장 방식을 MEMORY_ONLY로 바꾸고 화면 값을 유지한다
-    Web-->>User: 탭을 닫으면 값이 사라진다는 안내
   else 저장 방식이 MEMORY_ONLY
-    Store-->>Web: 탭의 메모리 사본에만 남김
+    Web->>Web: 탭의 메모리 사본을 바꾼다
   end
+  Note over Web,Store: 읽기나 쓰기에서 예외가 나면 화면 값을 메모리 사본으로 삼아 MEMORY_ONLY로 바꾸고, 탭을 닫거나 새로 고침하면 값이 사라진다고 안내한다
   opt 소리나 진동 설정이 켜져 있다
     Web->>Device: 켜 둔 피드백만 낸다
   end
 ```
 
-읽기, 계산, 쓰기는 한 번의 동기 처리 안에서 끝나므로 화면은 저장 응답을 기다리지 않는다. 조작마다 저장소의 최신 값에 `increment`를 적용하므로, 버튼을 빠르게 연달아 눌러도 누른 횟수만큼 반영되고 다른 탭에서 센 값도 덮어쓰지 않는다(NFR-02, AC-10). 처음에 저장소를 쓸 수 있었더라도 저장 공간이 부족해 실제 쓰기가 실패하면, 그때부터 `MEMORY_ONLY`로 바꾸고 안내 문구를 바꾼다(NFR-11, AC-17). 값이 0일 때 빼기를 누르면 `decrement`가 받은 값을 그대로 돌려주고, 저장과 피드백을 생략한다(AC-03). 이 흐름에는 서버로 보내는 요청이 없다(AC-14).
+읽기, 계산, 쓰기는 한 번의 동기 처리 안에서 끝나므로 화면은 저장 응답을 기다리지 않는다. 조작마다 저장소의 최신 값에 `increment`를 적용하므로, 버튼을 빠르게 연달아 눌러도 누른 횟수만큼 반영되고 탭을 오가며 센 값도 덮어쓰지 않는다(NFR-02, AC-10). 서로 다른 탭에서 거의 같은 순간에 누른 조작은 [도메인 모델](domain.md#브라우저-저장-항목)의 범위 밖이다. 처음에 저장소를 쓸 수 있었더라도 저장소 접근이 막히거나 저장 공간이 부족해 읽기나 쓰기에서 예외가 나면, 그때부터 `MEMORY_ONLY`로 바꾸고 안내 문구를 바꾼다(NFR-11, AC-17). 값이 0일 때 빼기를 누르면 `decrement`가 받은 값을 그대로 돌려주고, 저장과 피드백을 생략한다(AC-03). 이 흐름에는 서버로 보내는 요청이 없다(AC-14).
 
 ## 리셋하고 되돌린다
 
@@ -75,10 +76,17 @@ sequenceDiagram
     Web-->>User: 0과 되돌리기 버튼을 보여 준다
     alt 되돌리기
       User->>Web: 되돌리기를 누른다
+      Web->>Store: 최신 값을 읽는다
+      Store-->>Web: CounterValueDto
       Web->>Core: undoReset(value, undo, now)
-      Core-->>Web: CounterValueDto
-      Web->>Store: 리셋 전 값을 저장
-      Web-->>User: 리셋 전 값을 보여 주고 버튼을 리셋으로 바꾼다
+      alt 리셋 뒤에 값이 바뀌지 않았다
+        Core-->>Web: CounterValueDto
+        Web->>Store: 리셋 전 값을 저장
+        Web-->>User: 리셋 전 값을 보여 주고 버튼을 리셋으로 바꾼다
+      else 다른 탭에서 값이 바뀌었다
+        Core-->>Web: CounterError UNDO_EXPIRED
+        Web-->>User: 저장된 값을 보여 주고 되돌리지 않았다고 알린다
+      end
     else 다음 조작
       User->>Web: 더하기를 누른다
       Web->>Core: increment(value, now)
@@ -89,7 +97,7 @@ sequenceDiagram
   end
 ```
 
-ResetUndo는 화면 메모리에만 두며, 상태별로 허용되는 조작은 [상태 전이](state.md)에서 정한다. 리셋 버튼은 조작 버튼과 떨어진 상태 줄에 작게 둔다(NFR-06).
+ResetUndo는 화면 메모리에만 두며, 상태별로 허용되는 조작은 [상태 전이](state.md)에서 정한다. 되돌리기는 저장소의 최신 값을 읽어 리셋 직후의 값(전체 단수 0, 마지막으로 센 시각 = `resetAt`)과 같을 때만 적용하므로, 다른 탭의 `storage` 이벤트가 아직 도착하지 않았더라도 그 탭에서 센 값을 덮어쓰지 않는다. `MEMORY_ONLY`이면 저장소 대신 탭의 메모리 사본을 읽는다. 리셋 버튼은 조작 버튼과 떨어진 상태 줄에 작게 둔다(NFR-06).
 
 ## 1세트당 단수를 정하거나 지운다
 
@@ -140,7 +148,7 @@ sequenceDiagram
   else 저장소를 쓸 수 없다
     Store-->>Web: 예외
     Web->>Web: 저장 방식을 MEMORY_ONLY로 정한다
-    Web-->>User: 화면을 닫으면 값이 사라진다는 안내
+    Web-->>User: 탭을 닫거나 새로 고침하면 값이 사라진다는 안내
   end
 ```
 

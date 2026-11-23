@@ -31,6 +31,7 @@ classDiagram
   }
   class ResetUndo {
     +number totalBeforeReset
+    +string resetAt
   }
   class RepeatPosition {
     +RepeatKind kind
@@ -68,15 +69,15 @@ classDiagram
   QuickCounterStore --> StorageMode : "uses"
 ```
 
-CounterValue는 카운터 하나의 전체 단수, 1세트당 단수, 마지막으로 센 시각이다. 리셋하면 되돌리기에 쓸 ResetUndo가 생기며, ResetUndo는 화면에만 두고 저장하지 않는다(FR-06). QuickCounterStore는 apps/web이 브라우저 저장소를 다루는 부분이다. 한 브라우저 탭에는 QuickCounterStore가 하나만 있고, 로그아웃 홈의 퀵 카운터 구역, 퀵 카운터 화면, 이어서 뜨기 바가 모두 이 저장소로 값을 읽고 쓴다. 저장소를 쓸 수 없으면 QuickCounterStore가 탭 안에 둔 메모리 사본 하나에만 값을 두므로, 같은 탭에서 화면을 오가도 값이 이어지고 탭을 닫거나 새로 고침하면 사라진다(NFR-11).
+CounterValue는 카운터 하나의 전체 단수, 1세트당 단수, 마지막으로 센 시각이다. 리셋하면 되돌리기에 쓸 ResetUndo가 생기며, ResetUndo는 화면에만 두고 저장하지 않는다(FR-06). QuickCounterStore는 apps/web이 브라우저 저장소를 다루는 부분이다. 한 브라우저 탭에는 QuickCounterStore가 하나만 있고, 로그아웃 홈의 퀵 카운터 구역, 퀵 카운터 화면, 이어서 뜨기 바가 모두 이 저장소로 값을 읽고 쓴다. 저장소를 쓸 수 없으면 QuickCounterStore가 탭 안에 둔 메모리 사본 하나에만 값을 두므로, 같은 탭에서 화면을 오가도 값이 이어지고 탭을 닫거나 새로 고침하면 사라진다(NFR-11). 처음에는 저장소를 쓸 수 있었더라도 이후 읽기나 쓰기에서 예외가 나면, 그때 화면에 보이던 값을 메모리 사본으로 삼아 `MEMORY_ONLY`로 바꾼다.
 
 | 클래스 | 뜻 | 저장하는 곳 | 관련 FR |
 |---|---|---|---|
 | CounterValue | 카운터의 전체 단수(0 이상의 정수), 1세트당 단수(없거나 1 이상의 정수), 마지막으로 센 시각 | 브라우저 저장소의 퀵 카운터 항목. 저장소를 쓸 수 없으면 QuickCounterStore가 탭마다 하나 두는 메모리 사본 | FR-01~FR-04, FR-13, FR-25, FR-26 |
-| ResetUndo | 리셋 직전의 전체 단수. 되돌리기 버튼이 보이는 동안만 있다 | 화면 메모리 | FR-05, FR-06 |
+| ResetUndo | 리셋 직전의 전체 단수와, 리셋이 마지막으로 센 시각으로 저장한 시각(`resetAt`). 되돌리기 버튼이 보이는 동안만 있다 | 화면 메모리 | FR-05, FR-06 |
 | RepeatPosition | 전체 단수를 'n세트 m단'으로 바꾼 표시 값. 1세트당 단수가 없으면 `NONE`, 전체 단수가 0이면 `NOT_STARTED`다 | 저장하지 않고 계산한다 | FR-25, FR-26 |
 | CounterSettings | 소리 피드백, 진동 피드백, 화면 꺼짐 방지 설정 | 브라우저 저장소의 설정 항목 | FR-09~FR-11 |
-| QuickCounterStore | 두 항목을 읽고 쓰는 apps/web 모듈. 탭마다 하나만 두고 모든 화면이 함께 쓴다. 저장 방식은 `PERSISTENT`나 `MEMORY_ONLY`이며, 실제 쓰기가 실패하면 `MEMORY_ONLY`로 바꾼다 | 해당 없음 | FR-13, FR-15, NFR-11 |
+| QuickCounterStore | 두 항목을 읽고 쓰는 apps/web 모듈. 탭마다 하나만 두고 모든 화면이 함께 쓴다. 저장 방식은 `PERSISTENT`나 `MEMORY_ONLY`이며, 읽기나 쓰기에서 예외가 나면 `MEMORY_ONLY`로 바꾼다 | 해당 없음 | FR-13, FR-15, NFR-11 |
 
 ## shared 함수
 
@@ -104,6 +105,7 @@ classDiagram
   }
   class ResetUndoDto {
     +number totalBeforeReset
+    +string resetAt
   }
   class RepeatPositionDto {
     +string kind
@@ -120,6 +122,7 @@ classDiagram
     <<enumeration>>
     INVALID_SET_SIZE
     INVALID_STORED_VALUE
+    UNDO_EXPIRED
   }
   counterCore ..> CounterValueDto : "returns"
   counterCore ..> ResetResultDto : "returns"
@@ -136,14 +139,14 @@ counterCore는 `packages/shared/src/counter/`에 두는 순수 함수 모음이�
 |---|---|---|---|---|
 | `increment` | `CounterValueDto`, `now` | `CounterValueDto` (전체 단수 +1, 마지막으로 센 시각 = `now`) | 없음 | FR-01, FR-04, FR-41 |
 | `decrement` | `CounterValueDto`, `now` | `CounterValueDto` (전체 단수 -1, 마지막으로 센 시각 = `now`). 전체 단수가 0이면 값을 바꾸지 않는다 | 없음 | FR-01, FR-02, FR-04 |
-| `reset` | `CounterValueDto`, `now` | `ResetResultDto` (전체 단수 0, 리셋 전 값을 담은 ResetUndo) | 없음 | FR-05, FR-06 |
-| `undoReset` | `CounterValueDto`, `ResetUndoDto`, `now` | `CounterValueDto` (전체 단수 = 리셋 전 값) | 없음 | FR-06 |
+| `reset` | `CounterValueDto`, `now` | `ResetResultDto` (전체 단수 0, 리셋 전 값과 `resetAt` = `now`를 담은 ResetUndo) | 없음 | FR-05, FR-06 |
+| `undoReset` | 저장소에서 다시 읽은 `CounterValueDto`, `ResetUndoDto`, `now` | `CounterValueDto` (전체 단수 = 리셋 전 값). 받은 값의 전체 단수가 0이고 마지막으로 센 시각이 `resetAt`과 같을 때만 되돌린다 | `UNDO_EXPIRED` | FR-06 |
 | `changeSetSize` | `CounterValueDto`, 1세트당 단수(1 이상의 정수 또는 없음) | `CounterValueDto` (전체 단수는 그대로) | `INVALID_SET_SIZE` | FR-25, FR-26 |
 | `getRepeatPosition` | 전체 단수, 1세트당 단수 | `RepeatPositionDto` | 없음 | FR-25 |
 | `parseCounterValue` | 브라우저 저장소에서 읽은 값 | `CounterValueDto` | `INVALID_STORED_VALUE` | FR-13 |
 | `parseCounterSettings` | 브라우저 저장소에서 읽은 값 | `CounterSettingsDto`. 없는 항목은 꺼짐으로 채운다 | `INVALID_STORED_VALUE` | FR-11 |
 
-`getRepeatPosition`은 요구사항의 반복 표시 식을 따른다. 전체 단수 `c`가 1 이상이면 `set = floor((c - 1) / k) + 1`, `row = (c - 1) % k + 1`이고, `c`가 0이면 `NOT_STARTED`다. `parseCounterValue`가 `INVALID_STORED_VALUE`로 실패하면 apps/web은 전체 단수 0인 새 값으로 시작한다.
+`getRepeatPosition`은 요구사항의 반복 표시 식을 따른다. 전체 단수 `c`가 1 이상이면 `set = floor((c - 1) / k) + 1`, `row = (c - 1) % k + 1`이고, `c`가 0이면 `NOT_STARTED`다. `parseCounterValue`가 `INVALID_STORED_VALUE`로 실패하면 apps/web은 전체 단수 0인 새 값으로 시작한다. `undoReset`이 `UNDO_EXPIRED`로 실패하면 리셋 뒤에 다른 탭에서 값이 바뀐 것이므로, apps/web은 저장된 값을 그대로 보여 주고 되돌리지 않았다고 알린다.
 
 ## 브라우저 저장 항목
 
@@ -156,8 +159,9 @@ counterCore는 `packages/shared/src/counter/`에 두는 순수 함수 모음이�
 
 같은 브라우저에서 여러 탭을 열어 둘 때는 아래 규칙을 따른다.
 
-- 조작할 때마다 저장소의 최신 값을 다시 읽어 counterCore 함수를 적용하고 바로 쓴다. 읽기, 계산, 쓰기는 한 번의 동기 처리 안에서 끝낸다. 그래서 탭을 오가며 센 조작이 화면에 늦게 반영된 값 때문에 덮어써지지 않고 모두 더해진다.
-- 다른 탭에서 값이 바뀌면 `storage` 이벤트로 화면 값을 맞춘다. 되돌리기 버튼이 보이던 탭은 되돌리기 정보를 버린다([상태 전이](state.md)).
+- 조작할 때마다 저장소의 최신 값을 다시 읽어 counterCore 함수를 적용하고 바로 쓴다. 읽기, 계산, 쓰기는 한 번의 동기 처리 안에서 끝낸다. 그래서 탭을 오가며 센 조작이 화면에 늦게 반영된 값 때문에 덮어써지지 않고 모두 더해진다. 되돌리기도 같은 방식으로 최신 값을 읽은 뒤 `undoReset`을 적용한다.
+- `storage` 이벤트를 받으면 이벤트에 담긴 값을 쓰지 않고 저장소의 현재 값을 다시 읽어 화면에 보여 준다. 이벤트는 늦게 도착할 수 있어서, 이벤트의 값이 이미 더 오래된 값일 수 있기 때문이다. 되돌리기 버튼이 보이던 탭은 되돌리기 정보를 버린다([상태 전이](state.md)).
+- 저장 방식이 `MEMORY_ONLY`인 탭은 `storage` 이벤트를 무시한다. 이 탭의 값은 메모리 사본에만 있으므로 다른 탭의 저장 값과 섞지 않는다.
 - 서로 다른 탭에서 거의 같은 순간에 누른 조작까지 탭 사이에서 순서를 맞추지는 않는다. 한 사람이 한 번에 한 화면에서 센다는 전제이며, NFR-02가 다루는 빠른 연속 입력은 한 화면 안의 조작이다.
 
 ## 관련 문서
