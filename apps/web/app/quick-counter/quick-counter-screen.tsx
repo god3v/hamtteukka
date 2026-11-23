@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { getRepeatPosition } from "@hamtteukka/shared";
 
 import { formatLastCounted, formatRepeatPosition, formatRows } from "@/lib/counter-format";
-import { inAppHistory } from "@/lib/in-app-history";
+import { inAppHistory, stepsBack } from "@/lib/in-app-history";
 import {
   createQuickCounterController,
   storageNotice,
@@ -80,8 +80,9 @@ export function QuickCounterScreen() {
   const announcement = position ? `${rows}, ${position}` : rows;
 
   // 앱 안에서 열었으면 열기 전 화면으로 돌아가고, 주소로 바로 들어왔으면 로그아웃 홈으로 간다.
+  // 이 화면에서 생긴 해시 기록(#main)은 건너뛴다.
   function leave() {
-    if (inAppHistory.canGoBack()) router.back();
+    if (inAppHistory.canGoBack()) window.history.go(-stepsBack(window.location.hash));
     else router.replace("/");
   }
 

@@ -19,5 +19,14 @@ export function createInAppHistory(): InAppHistory {
   };
 }
 
+/**
+ * 열기 전 화면으로 돌아갈 때 뒤로 갈 기록 수. 이 기록은 경로만 보므로 같은 화면의 해시 기록은 따로 센다.
+ * 퀵 카운터 화면에서 '본문으로 건너뛰기'(#main)를 누르면 같은 화면의 해시 기록이 하나 더 생긴다.
+ * 같은 해시로 다시 이동하면 기록이 늘지 않으므로, 해시가 있으면 그 기록까지 두 단계를 뒤로 간다.
+ */
+export function stepsBack(hash: string): number {
+  return hash ? 2 : 1;
+}
+
 /** 이 탭의 기록. 새로 고침하면 처음부터 다시 기록한다. */
 export const inAppHistory = createInAppHistory();
