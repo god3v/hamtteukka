@@ -68,7 +68,7 @@ test("003/AC-13 진동을 지원하지 않으면 지원 여부를 false로 알�
   assert.equal(calls.tones, 1);
 });
 
-test("소리를 낼 수 없으면 지원 여부를 false로 알리고 소리 설정을 켜도 예외 없이 넘어간다", () => {
+test("003/AC-13 소리를 낼 수 없으면 지원 여부를 false로 알리고 소리 설정을 켜도 예외 없이 넘어간다", () => {
   const calls: Calls = { tones: 0, vibrations: [] };
   const feedback = createCounterFeedback(env(calls, { audio: false }));
 
@@ -96,7 +96,7 @@ test("소리 장치는 처음 소리를 낼 때 한 번만 만든다", () => {
   assert.equal(calls.tones, 2);
 });
 
-test("기기 기능이 예외를 던져도 카운트를 막지 않도록 피드백은 예외를 밖으로 던지지 않는다", () => {
+test("003/AC-13 기기 기능이 예외를 던져도 카운트를 막지 않도록 피드백은 예외를 밖으로 던지지 않는다", () => {
   const feedback = createCounterFeedback({
     vibrate: () => {
       throw new Error("vibrate failed");

@@ -57,6 +57,21 @@ function browserReleases(sentinel: WakeLockSentinelLike | undefined) {
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+// 테스트가 끝나는 시점을 정할 수 있는 요청. 요청이 진행 중일 때의 동작을 확인한다.
+function deferredRequests() {
+  const pending: Array<(sentinel: WakeLockSentinelLike) => void> = [];
+  const sentinels: WakeLockSentinelLike[] = [];
+  const request = () =>
+    new Promise<WakeLockSentinelLike>((resolve) => {
+      pending.push((sentinel) => {
+        sentinels.push(sentinel);
+        resolve(sentinel);
+      });
+    });
+  const resolveAll = () => pending.splice(0).forEach((resolve) => resolve(fakeSentinel()));
+  return { request, pending, sentinels, resolveAll };
+}
+
 test("003/AC-11 화면 꺼짐 방지를 켜면 요청하고 켜진 상태로 알린다", async () => {
   const { sentinels, wakeLock } = setup();
 
@@ -80,7 +95,51 @@ test("003/AC-11 탭이 숨겨졌다가 다시 보이면 화면 꺼짐 방지를 
   assert.equal(wakeLock.isActive(), true);
 });
 
-test("화면 꺼짐 방지를 끄면 요청을 풀고, 탭이 다시 보여도 요청하지 않는다", async () => {
+test("003/AC-11 요청이 진행 중일 때 켜기를 다시 불러도 요청은 한 번만 보내고, 끄면 그 요청을 푼다", async () => {
+  const requests = deferredRequests();
+  const wakeLock = createScreenWakeLock({ document: fakeDocument(), request: requests.request });
+
+  const first = wakeLock.enable();
+  const second = wakeLock.enable();
+  assert.equal(requests.pending.length, 1);
+  requests.resolveAll();
+
+  assert.deepEqual(await Promise.all([first, second]), [true, true]);
+  await wakeLock.disable();
+  assert.equal(requests.sentinels.length, 1);
+  assert.equal(requests.sentinels[0]?.released, true);
+  assert.equal(wakeLock.isActive(), false);
+});
+
+test("003/AC-11 요청이 끝나기 전에 끄면 받은 요청을 바로 풀고 켜진 상태로 남지 않는다", async () => {
+  const requests = deferredRequests();
+  const wakeLock = createScreenWakeLock({ document: fakeDocument(), request: requests.request });
+
+  const enabled = wakeLock.enable();
+  const disabled = wakeLock.disable();
+  requests.resolveAll();
+
+  assert.equal(await enabled, false);
+  await disabled;
+  assert.equal(requests.sentinels[0]?.released, true);
+  assert.equal(wakeLock.isActive(), false);
+});
+
+test("003/AC-11 요청이 끝나기 전에 화면을 닫아 정리해도 받은 요청을 바로 푼다", async () => {
+  const requests = deferredRequests();
+  const wakeLock = createScreenWakeLock({ document: fakeDocument(), request: requests.request });
+
+  const enabled = wakeLock.enable();
+  const disposed = wakeLock.dispose();
+  requests.resolveAll();
+
+  assert.equal(await enabled, false);
+  await disposed;
+  assert.equal(requests.sentinels[0]?.released, true);
+  assert.equal(wakeLock.isActive(), false);
+});
+
+test("003/AC-11 화면 꺼짐 방지를 끄면 요청을 풀고, 탭이 다시 보여도 요청하지 않는다", async () => {
   const { doc, sentinels, wakeLock } = setup();
   await wakeLock.enable();
 
@@ -103,7 +162,7 @@ test("003/AC-12 Screen Wake Lock API가 없으면 지원하지 않음으로 알�
   assert.equal(wakeLock.isActive(), false);
 });
 
-test("브라우저가 요청을 거절해도 예외를 밖으로 던지지 않고 false로 끝난다", async () => {
+test("003/AC-12 브라우저가 요청을 거절해도 예외를 밖으로 던지지 않고 false로 끝난다", async () => {
   const { wakeLock } = setup(async () => {
     throw new Error("NotAllowedError");
   });

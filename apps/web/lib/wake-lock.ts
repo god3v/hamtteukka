@@ -33,29 +33,49 @@ export function createScreenWakeLock(env: WakeLockEnv): ScreenWakeLock {
   let wanted = false;
   let listening = false;
   let sentinel: WakeLockSentinelLike | undefined;
+  // 진행 중인 요청. 요청이 끝나기 전에 다시 켜거나 탭이 다시 보여도 같은 요청에 합류해, 요청이 두 번 나가지 않게 한다.
+  let pending: Promise<boolean> | undefined;
 
-  async function acquire(): Promise<boolean> {
-    if (!env.request || env.document.visibilityState !== "visible") return false;
-    if (sentinel && !sentinel.released) return true;
+  async function releaseSentinel(target: WakeLockSentinelLike) {
+    if (target.released) return;
     try {
-      sentinel = await env.request();
+      await target.release();
+    } catch {
+      // 이미 풀린 요청을 다시 풀 때 생기는 오류는 무시한다.
+    }
+  }
+
+  async function requestOnce(request: () => Promise<WakeLockSentinelLike>): Promise<boolean> {
+    try {
+      const acquired = await request();
+      // 요청을 기다리는 동안 끄거나 화면을 닫았으면 받은 요청을 바로 푼다.
+      if (!wanted) {
+        await releaseSentinel(acquired);
+        return false;
+      }
+      sentinel = acquired;
       return true;
     } catch {
       // 절전 모드처럼 브라우저가 요청을 거절할 수 있다. 카운터는 그대로 쓸 수 있으므로 false로 알린다.
-      sentinel = undefined;
       return false;
     }
   }
 
+  function acquire(): Promise<boolean> {
+    if (!env.request || env.document.visibilityState !== "visible") return Promise.resolve(false);
+    if (sentinel && !sentinel.released) return Promise.resolve(true);
+    pending ??= requestOnce(env.request).finally(() => {
+      pending = undefined;
+    });
+    return pending;
+  }
+
   async function release() {
+    // 진행 중인 요청이 있으면 끝나기를 기다린다. wanted가 false이므로 그 요청은 requestOnce가 바로 푼다.
+    if (pending) await pending;
     const current = sentinel;
     sentinel = undefined;
-    if (!current || current.released) return;
-    try {
-      await current.release();
-    } catch {
-      // 이미 풀린 요청을 다시 풀 때 생기는 오류는 무시한다.
-    }
+    if (current) await releaseSentinel(current);
   }
 
   const onVisibilityChange = () => {
