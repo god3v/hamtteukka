@@ -1,0 +1,105 @@
+// 퀵 카운터 화면의 조작과 리셋·되돌리기 상태. docs/specs/003-row-counter/design/state.md의 전이 표를 따른다.
+// 값은 QuickCounterStore가 저장하고, 이 컨트롤러는 화면에만 있는 상태(리셋 확인 중, 되돌리기 가능)를 맡는다.
+import {
+  decrement,
+  increment,
+  reset,
+  undoReset,
+  type CounterResult,
+  type CounterValueDto,
+  type ResetUndoDto,
+} from "@hamtteukka/shared";
+
+import type { QuickCounterStore, StorageMode } from "./quick-counter-store.ts";
+
+export type ScreenPhase = { kind: "counting" } | { kind: "confirming" } | { kind: "undo"; undo: ResetUndoDto };
+
+const COUNTING: ScreenPhase = { kind: "counting" };
+const CONFIRMING: ScreenPhase = { kind: "confirming" };
+
+export type QuickCounterController = {
+  getPhase(): ScreenPhase;
+  subscribe(listener: () => void): () => void;
+  increment(): void;
+  decrement(): void;
+  requestReset(): void;
+  cancelReset(): void;
+  confirmReset(): void;
+  /** 되돌리기 버튼이 보일 때만 동작한다. 리셋 뒤 다른 탭에서 값이 바뀌었으면 UNDO_EXPIRED로 끝난다. */
+  undoReset(): CounterResult<CounterValueDto> | undefined;
+};
+
+/** 퀵 카운터에 1단을 더한다. 카운터 화면과 이어서 뜨기 바가 같은 함수를 쓴다. */
+export function countUp(store: QuickCounterStore, now: string): CounterValueDto {
+  return store.update((value) => increment(value, now));
+}
+
+export function storageNotice(mode: StorageMode): string {
+  return mode === "PERSISTENT"
+    ? "이 브라우저에만 저장돼요. 브라우저 데이터를 지우면 사라져요."
+    : "탭을 닫거나 새로 고침하면 값이 사라져요.";
+}
+
+export function createQuickCounterController(
+  store: QuickCounterStore,
+  clock: () => string = () => new Date().toISOString(),
+): QuickCounterController {
+  let phase: ScreenPhase = COUNTING;
+  const listeners = new Set<() => void>();
+  let unsubscribeStore: (() => void) | undefined;
+
+  function setPhase(next: ScreenPhase) {
+    if (next === phase) return;
+    phase = next;
+    listeners.forEach((listener) => listener());
+  }
+
+  return {
+    getPhase: () => phase,
+    // 화면이 구독하는 동안에만 저장소를 구독한다. 화면을 붙였다 떼도 따로 정리할 일이 남지 않는다.
+    subscribe(listener) {
+      listeners.add(listener);
+      // 되돌리기 버튼이 보이는 동안 다른 탭에서 값이 바뀌면 되돌리기 정보를 버린다.
+      unsubscribeStore ??= store.subscribe((change) => {
+        if (change === "external" && phase.kind === "undo") setPhase(COUNTING);
+      });
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) {
+          unsubscribeStore?.();
+          unsubscribeStore = undefined;
+        }
+      };
+    },
+    increment() {
+      countUp(store, clock());
+      setPhase(COUNTING);
+    },
+    decrement() {
+      store.update((value) => decrement(value, clock()));
+      setPhase(COUNTING);
+    },
+    requestReset() {
+      setPhase(CONFIRMING);
+    },
+    cancelReset() {
+      setPhase(COUNTING);
+    },
+    confirmReset() {
+      let undo: ResetUndoDto | undefined;
+      store.update((value) => {
+        const result = reset(value, clock());
+        undo = result.undo;
+        return result.value;
+      });
+      setPhase(undo ? { kind: "undo", undo } : COUNTING);
+    },
+    undoReset() {
+      if (phase.kind !== "undo") return undefined;
+      const { undo } = phase;
+      const result = store.tryUpdate((latest) => undoReset(latest, undo, clock()));
+      setPhase(COUNTING);
+      return result;
+    },
+  };
+}

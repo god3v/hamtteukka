@@ -6,6 +6,7 @@ import { getAppInfo } from "@hamtteukka/shared";
 import { THEME_COLORS, themeInitScript } from "@/lib/theme";
 
 import { BottomTabs } from "./_components/bottom-tabs";
+import { HistoryTracker } from "./_components/history-tracker";
 // Pretendard 가변 글꼴. 글자 범위별로 나뉜 파일 가운데 화면에 쓰인 글자의 파일만 내려받는다.
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         </a>
         {/* 넓은 화면에서도 휴대폰 화면 배치를 최대 600px 가운데 열에 그대로 둔다. 열 바깥은 body의 canvas 색이다. */}
         <div className="mx-auto flex min-h-dvh w-full max-w-[600px] flex-col bg-surface">
+          <HistoryTracker />
           {children}
           <BottomTabs />
         </div>
