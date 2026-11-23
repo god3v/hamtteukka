@@ -1,7 +1,7 @@
 ---
 doc_type: reference
 status: active
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # 함뜨까 출시 로드맵
@@ -101,6 +101,7 @@ flowchart TD
 - 공개 출시 때 Vercel Pro(월 $20)와 Supabase Pro(월 $25)로 바꾸며, 합계는 월 약 $45다.
 - Vercel 이용약관은 Hobby 플랜을 개인·비상업 용도로만 허용한다([Vercel 이용약관](https://vercel.com/legal/terms)). Supabase Free는 1주 동안 활동이 없으면 프로젝트를 일시 중지한다([Supabase 요금](https://supabase.com/pricing)).
 - 각 스펙의 설계는 그 스펙의 요구사항이 승인(`status: approved`)된 뒤에 작성한다. 스펙마다 승인 상태가 다르므로 각 요구사항 문서의 `status`를 확인한다.
+- 퀵 카운터(F-COUNTER-02)는 R1 진입 조건의 예외로, R0를 진행하는 동안 먼저 설계하고 만든다(2026-11-20 결정). 값을 그 브라우저에만 저장해 계정과 DB에 기대지 않기 때문이다. 로그인한 뒤 퀵 카운터를 프로젝트로 옮기는 기능(003 FR-16~FR-18)은 R1에서 다른 카운터 기능과 함께 만든다.
 
 ### R1+ 도구 보강
 
