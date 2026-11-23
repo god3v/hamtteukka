@@ -1,7 +1,7 @@
 ---
 doc_type: explanation
 status: active
-updated: 2026-11-18
+updated: 2026-11-20
 ---
 
 # 도메인 지도
@@ -161,7 +161,7 @@ classDiagram
 | LedgerEntry | 정산 원장 항목 (예정) | R4 | R4 설계 |
 | Payout | PG 지급대행을 통한 작가 지급 (예정) | R4 | R4 설계 |
 
-로그인 없이 쓰는 퀵 카운터(F-COUNTER-02)의 저장 위치와 로그인 후 옮기는 방식은 003 요구사항과 설계에서 정한다.
+로그인 없이 쓰는 퀵 카운터(F-COUNTER-02)는 서버 테이블 없이 그 브라우저에만 저장한다. 값 계산은 packages/shared의 counterCore 순수 함수가 맡고, 프로젝트 카운터도 같은 함수를 쓴다([003 design/domain.md](../specs/003-row-counter/design/domain.md)). 로그인한 뒤 프로젝트 카운터로 옮기는 방식은 003의 2차 설계에서 정한다.
 
 ## 경계를 이렇게 나눈 이유
 
