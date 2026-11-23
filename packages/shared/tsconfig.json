@@ -1,4 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // apps/web의 Node 내장 테스트 러너가 이 패키지를 TypeScript 소스 그대로 읽으므로, 상대 경로 import에 .ts를 붙인다.
+    "allowImportingTsExtensions": true
+  },
   "include": ["src"]
 }

@@ -1,5 +1,5 @@
-export { appInfoSchema, getAppInfo } from "./app-info/app-info";
-export type { AppInfo } from "./app-info/app-info";
+export { appInfoSchema, getAppInfo } from "./app-info/app-info.ts";
+export type { AppInfo } from "./app-info/app-info.ts";
 export {
   changeSetSize,
   counterSettingsSchema,
@@ -12,7 +12,7 @@ export {
   reset,
   resetUndoSchema,
   undoReset,
-} from "./counter/counter-core";
+} from "./counter/counter-core.ts";
 export type {
   CounterError,
   CounterResult,
@@ -21,4 +21,4 @@ export type {
   RepeatPositionDto,
   ResetResultDto,
   ResetUndoDto,
-} from "./counter/counter-core";
+} from "./counter/counter-core.ts";
