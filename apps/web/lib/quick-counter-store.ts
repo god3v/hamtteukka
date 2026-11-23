@@ -61,6 +61,14 @@ function probe(env: QuickCounterStoreEnv): StorageLike | undefined {
   }
 }
 
+function sameValue(a: CounterValueDto, b: CounterValueDto): boolean {
+  return a.total === b.total && a.setSize === b.setSize && a.lastCountedAt === b.lastCountedAt;
+}
+
+function sameSettings(a: CounterSettingsDto, b: CounterSettingsDto): boolean {
+  return a.sound === b.sound && a.vibration === b.vibration && a.keepScreenOn === b.keepScreenOn;
+}
+
 function readValue(storage: StorageLike): CounterValueDto {
   const raw = storage.getItem(QUICK_COUNTER_KEY);
   if (raw === null) return EMPTY_COUNTER_VALUE;
@@ -96,11 +104,13 @@ export function createQuickCounterStore(env: QuickCounterStoreEnv): QuickCounter
     }
   }
 
+  // 저장소에서 다시 읽은 값은 내용이 같아도 새 객체이므로, 필드 값으로 비교해 실제로 바뀐 경우에만 snapshot을 바꾸고 알린다.
   function set(next: Partial<QuickCounterSnapshot>, change: QuickCounterChange) {
+    const value = next.value && !sameValue(next.value, snapshot.value) ? next.value : snapshot.value;
+    const settings = next.settings && !sameSettings(next.settings, snapshot.settings) ? next.settings : snapshot.settings;
     const mode: StorageMode = storage ? "PERSISTENT" : "MEMORY_ONLY";
-    const merged = { ...snapshot, ...next, mode };
-    if (merged.value === snapshot.value && merged.settings === snapshot.settings && merged.mode === snapshot.mode) return;
-    snapshot = merged;
+    if (value === snapshot.value && settings === snapshot.settings && mode === snapshot.mode) return;
+    snapshot = { value, settings, mode };
     listeners.forEach((listener) => listener(change));
   }
 

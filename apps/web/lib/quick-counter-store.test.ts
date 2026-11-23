@@ -141,7 +141,7 @@ test("다른 탭의 변경 알림을 받으면 저장소의 현재 값을 다시
   assert.deepEqual(changes, ["external"]);
 });
 
-test("MEMORY_ONLY인 탭은 다른 탭의 변경 알림을 무시한다", () => {
+test("003/AC-17 MEMORY_ONLY인 탭은 다른 탭의 변경 알림을 무시한다", () => {
   const browser = fakeBrowser();
   const tabA = createQuickCounterStore(browser.env());
   const tabB = createQuickCounterStore(browser.env());
@@ -181,6 +181,26 @@ test("값이 바뀌지 않는 조작은 저장하지도 알리지도 않는다",
 
   assert.equal(browser.flags.writes, writesBefore);
   assert.deepEqual(changes, []);
+});
+
+test("저장소에 값이 있어도, 값이 같으면 다시 읽은 뒤에도 알리지 않는다", () => {
+  const browser = fakeBrowser();
+  const tabA = createQuickCounterStore(browser.env());
+  const tabB = createQuickCounterStore(browser.env());
+  countTo(tabA, 3);
+  countTo(tabB, 0);
+  browser.deliver(1, QUICK_COUNTER_KEY);
+  const before = tabB.getSnapshot();
+  const writesBefore = browser.flags.writes;
+  const changes: QuickCounterChange[] = [];
+  tabB.subscribe((change) => changes.push(change));
+
+  tabB.update((value) => value);
+  browser.deliver(1, QUICK_COUNTER_KEY);
+
+  assert.equal(browser.flags.writes, writesBefore);
+  assert.deepEqual(changes, []);
+  assert.equal(tabB.getSnapshot(), before);
 });
 
 test("실패한 조작은 저장하지 않고, 저장소의 현재 값을 화면에 보여 준다", () => {
