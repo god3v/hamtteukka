@@ -26,3 +26,9 @@ export function formatLastCounted(lastCountedAt: string | null, now: Date): stri
   const particle = elapsed === "방금" || elapsed === "어제" ? "" : "에";
   return `${elapsed}${particle} 셌어요.`;
 }
+
+/** 반복 설정 입력을 읽는다. 비어 있으면 반복 설정을 지우는 null이고, 나머지는 숫자로 바꿔 changeSetSize가 검사하게 한다. */
+export function parseSetSizeInput(text: string): number | null {
+  const trimmed = text.trim();
+  return trimmed === "" ? null : Number(trimmed);
+}

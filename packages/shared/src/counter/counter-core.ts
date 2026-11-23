@@ -70,7 +70,10 @@ export function undoReset(value: CounterValueDto, undo: ResetUndoDto, now: strin
 
 /** 1세트당 단수를 바꾸거나(null이면) 지운다. 전체 단수와 마지막으로 센 시각은 그대로다. */
 export function changeSetSize(value: CounterValueDto, setSize: number | null): CounterResult<CounterValueDto> {
-  if (setSize !== null && !(Number.isInteger(setSize) && setSize >= 1)) return { ok: false, error: "INVALID_SET_SIZE" };
+  // counterValueSchema의 .int()는 안전 정수만 받으므로, 저장한 값을 다시 읽을 수 있게 같은 기준으로 검사한다.
+  if (setSize !== null && !(Number.isSafeInteger(setSize) && setSize >= 1)) {
+    return { ok: false, error: "INVALID_SET_SIZE" };
+  }
   return { ok: true, value: { ...value, setSize } };
 }
 

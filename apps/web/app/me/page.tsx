@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { Screen } from "../_components/screen";
 import { ThemeToggle } from "../_components/theme-toggle";
+import { CounterSettingsRow } from "./counter-settings-row";
 
 export const metadata: Metadata = {
   title: "내 정보",
@@ -19,6 +20,7 @@ export default function MePage() {
           설정
         </h2>
         <ThemeToggle />
+        <CounterSettingsRow />
       </section>
 
       <section aria-labelledby="help" className="border-t border-line pt-6 pb-4">

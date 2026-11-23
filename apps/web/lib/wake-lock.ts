@@ -3,7 +3,12 @@
 // 탭이 숨겨지면 브라우저가 요청을 스스로 풀기 때문에, 탭이 다시 보이면 다시 요청한다.
 
 /** Screen Wake Lock API가 돌려주는 요청 객체의 일부. */
-export type WakeLockSentinelLike = { released: boolean; release(): Promise<void> };
+export type WakeLockSentinelLike = {
+  released: boolean;
+  release(): Promise<void>;
+  /** 절전 모드처럼 브라우저가 요청을 스스로 풀면 release 이벤트가 온다. */
+  addEventListener?(type: "release", listener: () => void): void;
+};
 
 export type WakeLockEnv = {
   /** 화면 꺼짐 방지를 요청한다. 브라우저가 Screen Wake Lock API를 지원하지 않으면 비워 둔다. */
@@ -26,6 +31,8 @@ export type ScreenWakeLock = {
   dispose(): Promise<void>;
   /** 지금 화면 꺼짐 방지가 걸려 있는지 알려 준다. 상태 줄의 표시에 쓴다. */
   isActive(): boolean;
+  /** 화면 꺼짐 방지가 걸리거나 풀릴 수 있는 때마다 알린다. 상태 줄은 알림을 받으면 isActive()를 다시 읽는다. */
+  subscribe(listener: () => void): () => void;
 };
 
 export function createScreenWakeLock(env: WakeLockEnv): ScreenWakeLock {
@@ -35,6 +42,11 @@ export function createScreenWakeLock(env: WakeLockEnv): ScreenWakeLock {
   let sentinel: WakeLockSentinelLike | undefined;
   // 진행 중인 요청. 요청이 끝나기 전에 다시 켜거나 탭이 다시 보여도 같은 요청에 합류해, 요청이 두 번 나가지 않게 한다.
   let pending: Promise<boolean> | undefined;
+  const listeners = new Set<() => void>();
+
+  function notify() {
+    listeners.forEach((listener) => listener());
+  }
 
   async function releaseSentinel(target: WakeLockSentinelLike) {
     if (target.released) return;
@@ -54,6 +66,9 @@ export function createScreenWakeLock(env: WakeLockEnv): ScreenWakeLock {
         return false;
       }
       sentinel = acquired;
+      // 탭이 보이는 동안 브라우저가 요청을 풀어도 상태 줄 표시를 끄게 알린다.
+      acquired.addEventListener?.("release", notify);
+      notify();
       return true;
     } catch {
       // 절전 모드처럼 브라우저가 요청을 거절할 수 있다. 카운터는 그대로 쓸 수 있으므로 false로 알린다.
@@ -73,13 +88,20 @@ export function createScreenWakeLock(env: WakeLockEnv): ScreenWakeLock {
   async function release() {
     // 진행 중인 요청이 있으면 끝나기를 기다린다. wanted가 false이므로 그 요청은 requestOnce가 바로 푼다.
     if (pending) await pending;
+    // 기다리는 동안 다시 켰으면 그 요청이 이 잠금을 쓰므로 풀지 않는다.
+    if (wanted) return;
     const current = sentinel;
     sentinel = undefined;
-    if (current) await releaseSentinel(current);
+    if (current) {
+      await releaseSentinel(current);
+      notify();
+    }
   }
 
   const onVisibilityChange = () => {
-    if (wanted && env.document.visibilityState === "visible") void acquire();
+    // 탭이 숨겨지면 브라우저가 요청을 스스로 풀었으므로 상태 줄 표시를 끄게 알린다.
+    if (env.document.visibilityState !== "visible") notify();
+    else if (wanted) void acquire();
   };
 
   return {
@@ -107,6 +129,10 @@ export function createScreenWakeLock(env: WakeLockEnv): ScreenWakeLock {
     },
     isActive() {
       return sentinel !== undefined && !sentinel.released;
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
     },
   };
 }

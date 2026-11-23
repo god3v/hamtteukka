@@ -4,7 +4,7 @@ import { test } from "node:test";
 
 import { getRepeatPosition } from "@hamtteukka/shared";
 
-import { formatLastCounted, formatRepeatPosition, formatRows } from "./counter-format.ts";
+import { formatLastCounted, formatRepeatPosition, formatRows, parseSetSizeInput } from "./counter-format.ts";
 
 const now = new Date(2026, 10, 23, 15, 30, 0);
 const at = (month: number, day: number, hour: number, minute: number) =>
@@ -29,4 +29,12 @@ test("마지막으로 센 시각을 지난 시각 표기로 쓴다", () => {
   assert.equal(formatLastCounted(at(11, 23, 15, 27), now), "3분 전에 셌어요.");
   assert.equal(formatLastCounted(at(11, 22, 21, 0), now), "어제 셌어요.");
   assert.equal(formatLastCounted(at(11, 2, 9, 0), now), "11월 2일에 셌어요.");
+});
+
+test("반복 설정 입력은 비어 있으면 지우기로, 나머지는 숫자로 읽는다", () => {
+  assert.equal(parseSetSizeInput(""), null);
+  assert.equal(parseSetSizeInput("  "), null);
+  assert.equal(parseSetSizeInput(" 4 "), 4);
+  assert.ok(Number.isNaN(parseSetSizeInput("abc")));
+  assert.equal(parseSetSizeInput("1.5"), 1.5);
 });

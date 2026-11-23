@@ -2,6 +2,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { getRepeatPosition } from "@hamtteukka/shared";
+
+import type { FeedbackSettings } from "./counter-feedback.ts";
+import { formatRepeatPosition } from "./counter-format.ts";
 import { createQuickCounterController, storageNotice } from "./quick-counter-controller.ts";
 import { createQuickCounterStore, QUICK_COUNTER_KEY, type QuickCounterStoreEnv } from "./quick-counter-store.ts";
 
@@ -28,7 +32,7 @@ function fakeBrowser() {
     };
   };
   const deliver = (tab: number) => tabs[tab]?.forEach((listener) => listener(QUICK_COUNTER_KEY));
-  return { env, deliver };
+  return { env, deliver, storage };
 }
 
 function setup(start = 0) {
@@ -37,6 +41,16 @@ function setup(start = 0) {
   const controller = createQuickCounterController(store, () => T);
   for (let i = 0; i < start; i++) controller.increment();
   return { browser, store, controller, total: () => store.getSnapshot().value.total };
+}
+
+// 피드백을 낸 설정을 기록한다. 소리와 진동을 실제로 내는 부분은 counter-feedback.test.ts가 확인한다.
+function setupWithFeedback(start: number) {
+  const browser = fakeBrowser();
+  const store = createQuickCounterStore(browser.env());
+  const played: FeedbackSettings[] = [];
+  const controller = createQuickCounterController(store, () => T, { play: (settings) => played.push(settings) });
+  for (let i = 0; i < start; i++) store.update((value) => ({ ...value, total: value.total + 1, lastCountedAt: T }));
+  return { store, controller, played };
 }
 
 test("003/AC-03 값이 0일 때 빼기를 눌러도 값은 0으로 남는다", () => {
@@ -158,4 +172,70 @@ test("화면이 구독을 모두 끊으면 저장소 구독도 끊는다", () =>
   browser.deliver(0);
 
   assert.equal(controller.getPhase().kind, "undo");
+});
+
+test("003/AC-21 1세트당 단수가 4이고 전체 단수가 5일 때 더하기를 누르면 2세트 2단과 전체 단수 6을 보여 준다", () => {
+  const { store, controller } = setup(5);
+  controller.changeSetSize(4);
+
+  controller.increment();
+
+  const { value } = store.getSnapshot();
+  assert.equal(value.total, 6);
+  assert.equal(formatRepeatPosition(getRepeatPosition(value.total, value.setSize)), "2세트 2단");
+});
+
+test("003/AC-22 1세트당 단수를 지워도 전체 단수와 저장된 값은 그대로다", () => {
+  const { browser, store, controller } = setup(8);
+  controller.changeSetSize(4);
+
+  const result = controller.changeSetSize(null);
+
+  assert.deepEqual(result, { ok: true, value: { total: 8, setSize: null, lastCountedAt: T } });
+  assert.equal(formatRepeatPosition(getRepeatPosition(store.getSnapshot().value.total, null)), null);
+  assert.deepEqual(JSON.parse(browser.storage.getItem(QUICK_COUNTER_KEY) ?? "null"), {
+    total: 8,
+    setSize: null,
+    lastCountedAt: T,
+  });
+});
+
+test("1세트당 단수가 1 이상의 정수가 아니면 INVALID_SET_SIZE로 끝나고 값을 바꾸지 않는다", () => {
+  const { store, controller } = setup(8);
+
+  for (const input of [0, -2, 1.5, Number.NaN]) {
+    assert.deepEqual(controller.changeSetSize(input), { ok: false, error: "INVALID_SET_SIZE" });
+  }
+  assert.equal(store.getSnapshot().value.setSize, null);
+});
+
+test("되돌리기 버튼이 보이는 동안 1세트당 단수를 바꾸면 되돌리기 정보를 버린다", () => {
+  const { controller } = setup(40);
+  controller.requestReset();
+  controller.confirmReset();
+
+  controller.changeSetSize(4);
+
+  assert.equal(controller.getPhase().kind, "counting");
+});
+
+test("003/AC-09 더하기와 빼기를 누르면 저장된 설정으로 피드백을 낸다", () => {
+  const { store, controller, played } = setupWithFeedback(3);
+  store.updateSettings({ sound: true });
+
+  controller.increment();
+  controller.decrement();
+
+  assert.deepEqual(played, [
+    { sound: true, vibration: false, keepScreenOn: false },
+    { sound: true, vibration: false, keepScreenOn: false },
+  ]);
+});
+
+test("003/AC-03 값이 0일 때 빼기를 누르면 값이 바뀌지 않으므로 피드백을 내지 않는다", () => {
+  const { controller, played } = setupWithFeedback(0);
+
+  controller.decrement();
+
+  assert.deepEqual(played, []);
 });

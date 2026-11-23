@@ -183,3 +183,55 @@ test("화면을 닫을 때 정리하면 요청을 풀고 탭 변화 감시를 �
   assert.equal(sentinels.length, 1);
   assert.equal(wakeLock.isActive(), false);
 });
+
+test("003/AC-11 화면 꺼짐 방지가 걸리거나 풀릴 때마다 구독자에게 알려, 상태 줄 표시를 바꿀 수 있다", async () => {
+  const { doc, sentinels, wakeLock } = setup();
+  const seen: boolean[] = [];
+  const unsubscribe = wakeLock.subscribe(() => seen.push(wakeLock.isActive()));
+
+  await wakeLock.enable();
+  browserReleases(sentinels[0]);
+  doc.hide();
+  doc.show();
+  await flush();
+  await wakeLock.disable();
+  unsubscribe();
+  await wakeLock.enable();
+
+  assert.deepEqual(seen, [true, false, true, false]);
+});
+
+test("003/AC-11 요청이 끝나기 전에 화면을 정리했다가 바로 다시 켜도 화면 꺼짐 방지가 걸린 채로 남는다", async () => {
+  const requests = deferredRequests();
+  const wakeLock = createScreenWakeLock({ document: fakeDocument(), request: requests.request });
+
+  const first = wakeLock.enable();
+  const disposed = wakeLock.dispose();
+  const second = wakeLock.enable();
+  requests.resolveAll();
+  await Promise.all([first, disposed, second]);
+
+  assert.equal(requests.sentinels[0]?.released, false);
+  assert.equal(wakeLock.isActive(), true);
+});
+
+test("003/AC-11 탭이 보이는 동안 브라우저가 화면 꺼짐 방지를 풀어도 구독자에게 알려 상태 줄 표시를 끈다", async () => {
+  const releaseListeners: Array<() => void> = [];
+  const sentinel: WakeLockSentinelLike = {
+    released: false,
+    release: async () => {
+      sentinel.released = true;
+    },
+    addEventListener: (_type, listener) => releaseListeners.push(listener),
+  };
+  const wakeLock = createScreenWakeLock({ document: fakeDocument(), request: async () => sentinel });
+  await wakeLock.enable();
+  const seen: boolean[] = [];
+  wakeLock.subscribe(() => seen.push(wakeLock.isActive()));
+
+  // 절전 모드처럼 브라우저가 탭을 숨기지 않고 요청을 푸는 경우다.
+  sentinel.released = true;
+  releaseListeners.forEach((listener) => listener());
+
+  assert.deepEqual(seen, [false]);
+});
