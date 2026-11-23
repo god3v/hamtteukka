@@ -21,6 +21,14 @@ function matchesPath(pathname: string, path: string): boolean {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
+// 화면 전체 높이의 바텀 시트로 여는 화면. 열려 있는 동안 하단 탭과 이어서 뜨기 바를 숨긴다
+// (docs/design/information-architecture.md의 카운터 화면 절).
+const SHEET_SCREENS: readonly string[] = ["/quick-counter"];
+
+export function isSheetScreen(pathname: string): boolean {
+  return SHEET_SCREENS.some((path) => matchesPath(pathname, path));
+}
+
 /** 지금 보고 있는 화면이 속한 탭. 어느 탭에도 속하지 않으면 undefined다. */
 export function findActiveTab(pathname: string): BottomTab | undefined {
   return BOTTOM_TABS.find((tab) => tab.paths.some((path) => matchesPath(pathname, path)));

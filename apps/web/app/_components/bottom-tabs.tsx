@@ -4,16 +4,19 @@ import { House, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { BOTTOM_TABS, findActiveTab, type BottomTab } from "@/lib/navigation";
+import { BOTTOM_TABS, findActiveTab, isSheetScreen, type BottomTab } from "@/lib/navigation";
 
 const ICONS: Record<BottomTab["id"], LucideIcon> = { home: House, me: UserRound };
 
 /**
  * 화면 아래쪽에 고정한 하단 탭. 가운데 열 안에서 sticky로 붙어 있으므로 넓은 화면에서도 열 너비를 넘지 않는다.
  * 활성 탭은 accent, 나머지는 muted로 그리고, 휴대폰의 아래쪽 안전 영역만큼 여백을 둔다.
+ * 퀵 카운터 화면처럼 전체 높이 시트로 여는 화면에서는 보이지 않는다.
  */
 export function BottomTabs() {
-  const activeId = findActiveTab(usePathname())?.id;
+  const pathname = usePathname();
+  if (isSheetScreen(pathname)) return null;
+  const activeId = findActiveTab(pathname)?.id;
 
   return (
     <nav

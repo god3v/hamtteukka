@@ -12,7 +12,7 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint .",
-    "test": "node --test eslint.config.test.mjs lib/theme.test.ts lib/navigation.test.ts lib/counter-feedback.test.ts lib/wake-lock.test.ts lib/quick-counter-store.test.ts"
+    "test": "node --test eslint.config.test.mjs lib/theme.test.ts lib/navigation.test.ts lib/counter-feedback.test.ts lib/wake-lock.test.ts lib/quick-counter-store.test.ts lib/quick-counter-controller.test.ts lib/elapsed-time.test.ts lib/counter-format.test.ts lib/in-app-history.test.ts"
   },
   "dependencies": {
     "@hamtteukka/shared": "workspace:*",
