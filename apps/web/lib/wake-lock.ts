@@ -3,7 +3,12 @@
 // 탭이 숨겨지면 브라우저가 요청을 스스로 풀기 때문에, 탭이 다시 보이면 다시 요청한다.
 
 /** Screen Wake Lock API가 돌려주는 요청 객체의 일부. */
-export type WakeLockSentinelLike = { released: boolean; release(): Promise<void> };
+export type WakeLockSentinelLike = {
+  released: boolean;
+  release(): Promise<void>;
+  /** 절전 모드처럼 브라우저가 요청을 스스로 풀면 release 이벤트가 온다. */
+  addEventListener?(type: "release", listener: () => void): void;
+};
 
 export type WakeLockEnv = {
   /** 화면 꺼짐 방지를 요청한다. 브라우저가 Screen Wake Lock API를 지원하지 않으면 비워 둔다. */
@@ -61,6 +66,8 @@ export function createScreenWakeLock(env: WakeLockEnv): ScreenWakeLock {
         return false;
       }
       sentinel = acquired;
+      // 탭이 보이는 동안 브라우저가 요청을 풀어도 상태 줄 표시를 끄게 알린다.
+      acquired.addEventListener?.("release", notify);
       notify();
       return true;
     } catch {

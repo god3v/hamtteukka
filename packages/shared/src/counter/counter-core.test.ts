@@ -112,8 +112,17 @@ describe("changeSetSize", () => {
     expect(changeSetSize(counter(8, 4), 6)).toEqual({ ok: true, value: counter(8, 6) });
   });
 
-  it.each([0, -1, 1.5, Number.NaN])("1세트당 단수 %s는 INVALID_SET_SIZE로 거부한다", (setSize) => {
+  it.each([0, -1, 1.5, Number.NaN, 2 ** 53])("1세트당 단수 %s는 INVALID_SET_SIZE로 거부한다", (setSize) => {
     expect(changeSetSize(counter(8, 4), setSize)).toEqual({ ok: false, error: "INVALID_SET_SIZE" });
+  });
+
+  it("받아들인 1세트당 단수는 저장한 뒤 다시 읽어도 그대로다", () => {
+    const result = changeSetSize(counter(8, null), Number.MAX_SAFE_INTEGER);
+
+    expect(result.ok && parseCounterValue(JSON.stringify(result.value))).toEqual({
+      ok: true,
+      value: counter(8, Number.MAX_SAFE_INTEGER),
+    });
   });
 });
 
