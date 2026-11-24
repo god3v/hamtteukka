@@ -1,3 +1,6 @@
+export { accountErrorSchema } from "./account/account-error.ts";
+export type { AccountError, AccountResult } from "./account/account-error.ts";
+export type { CookieAdapter, CookieOptionsDto, CookieToSet } from "./account/supabase-client.ts";
 export { appInfoSchema, getAppInfo } from "./app-info/app-info.ts";
 export type { AppInfo } from "./app-info/app-info.ts";
 export {
