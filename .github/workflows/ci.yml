@@ -46,6 +46,14 @@ jobs:
       - name: 테스트
         run: pnpm test
 
+      # DB 테스트(pgTAP)는 Supabase 로컬 스택에서 실행한다. supabase start가 supabase/migrations를 처음부터 적용한다.
+      # auth 스키마를 만드는 gotrue와 DB만 띄우고, 테스트에 쓰지 않는 서비스는 빼서 시간을 줄인다.
+      - name: Supabase 로컬 스택 시작
+        run: pnpm db:start -x realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: DB 테스트
+        run: pnpm db:test
+
       - name: 문서 구조 검사
         run: node scripts/check-docs.mjs
 

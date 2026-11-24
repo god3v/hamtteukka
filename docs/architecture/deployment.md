@@ -1,7 +1,7 @@
 ---
 doc_type: explanation
 status: active
-updated: 2026-11-18
+updated: 2026-11-24
 ---
 
 # 배포 구조
@@ -58,6 +58,8 @@ flowchart LR
 
 Vercel 함수의 기본 리전은 iad1이므로 production 함수 리전을 icn1로 명시해야 한다([Vercel icn1 문서](https://vercel.com/docs/pricing/regional-pricing/icn1)). Supabase Free 플랜은 활성 프로젝트를 2개까지 허용한다([Supabase 요금](https://supabase.com/pricing)). 따라서 preview 전용 Supabase 프로젝트를 둘지는 이 한도를 함께 고려해 정한다.
 
+운영 Supabase 프로젝트는 JWT를 비대칭 서명 키로 발급한다. 2026-11-24에 대시보드의 JWT Keys 화면에서 현재 키가 비대칭 키인지 확인했고, 같은 날 JWKS 주소가 `EC` 유형(`alg`: `ES256`)의 공개 키를 주는 것도 확인했다. R4에 추가할 Spring 서버는 프로젝트의 JWKS 주소(`/auth/v1/.well-known/jwks.json`)에서 공개 키를 받아 같은 토큰을 검증한다([ADR-0015](../decisions/0015-auth-providers-with-naver.md), [001 요구사항](../specs/001-account/requirements.md) NFR-07).
+
 ## Vercel 프로젝트 설정
 
 R0 작업 [#4](https://github.com/god3v/hamtteukka/issues/4)에서 아래와 같이 정했다. 저장소에 둘 수 있는 설정은 파일로 관리하고, 나머지는 Vercel 프로젝트 설정 화면에서 지정한다.
@@ -87,7 +89,8 @@ R0 작업 [#3](https://github.com/god3v/hamtteukka/issues/3)에서 아래와 같
 | 로컬 스택 설정 | Postgres 17, API 54321, DB 54322, Studio 54323 | `supabase/config.toml` |
 | 마이그레이션 | `<타임스탬프>_<이름>.sql` | `supabase/migrations/` |
 | 로컬 로그인 리디렉션 | `http://localhost:3000` | `supabase/config.toml`의 `auth.site_url` |
-| 실행 명령 | `pnpm db:start`, `pnpm db:stop`, `pnpm db:status`, `pnpm db:reset` | 루트 `package.json`의 `scripts` |
+| 실행 명령 | `pnpm db:start`, `pnpm db:stop`, `pnpm db:status`, `pnpm db:reset`, `pnpm db:test` | 루트 `package.json`의 `scripts` |
+| DB 테스트 | pgTAP 테스트를 `supabase test db`로 실행한다. 테스트 도우미는 `000_test_helpers.test.sql`이 테스트 DB에만 만든다 | `supabase/tests/database/` |
 
 환경 변수 이름은 루트의 `.env.example`에 적고, 실제 값은 저장소에 두지 않는다.
 
@@ -110,7 +113,7 @@ R0 작업 [#5](https://github.com/god3v/hamtteukka/issues/5)에서 아래와 같
 | 항목 | 값 |
 |---|---|
 | 실행 조건 | `dev`나 `main`으로 가는 PR, `dev`와 `main`에 들어온 푸시 |
-| `checks` 작업 | `pnpm install --frozen-lockfile` 뒤 `pnpm typecheck`, `pnpm lint`, `pnpm test`, `node scripts/check-docs.mjs`를 차례로 실행한다 |
+| `checks` 작업 | `pnpm install --frozen-lockfile` 뒤 `pnpm typecheck`, `pnpm lint`, `pnpm test`를 실행한다. 이어서 Supabase 로컬 스택을 DB와 인증 서비스만 띄워 `pnpm db:test`를 실행하고, 마지막으로 `node scripts/check-docs.mjs`를 실행한다 |
 | `release-source` 작업 | `main`으로 가는 PR의 출발 브랜치가 `dev`가 아니면 실패한다([ADR-0013](../decisions/0013-dev-main-branch-flow.md)) |
 | 실행 환경 | ubuntu-latest, Node.js 24, pnpm은 `packageManager` 버전 |
 | 액션 버전 | 태그 대신 커밋 SHA로 고정한다([constitution](../constitution.md) P-14) |

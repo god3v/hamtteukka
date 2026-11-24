@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Supabase 로컬 스택을 127.0.0.1에만 포트를 여는 Docker 네트워크에서 실행한다.
 // Supabase CLI는 기본으로 포트를 0.0.0.0에 열어 같은 네트워크의 다른 기기가 Studio와 DB에 접속할 수 있다.
-// 사용: node scripts/supabase-local.mjs <start|reset> [supabase 옵션...]
+// 사용: node scripts/supabase-local.mjs <start|reset|test> [supabase 옵션...]
+// test는 실행 중인 로컬 스택에 supabase/tests의 pgTAP 테스트를 실행한다. 테스트 컨테이너도 같은 네트워크에서 DB에 접속한다.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -11,11 +12,11 @@ import { fileURLToPath } from "node:url";
 const NETWORK = "hamtteukka-local";
 const BIND_OPTION = "com.docker.network.bridge.host_binding_ipv4";
 const BIND_ADDRESS = "127.0.0.1";
-const COMMANDS = { start: ["start"], reset: ["db", "reset"] };
+const COMMANDS = { start: ["start"], reset: ["db", "reset"], test: ["test", "db"] };
 
 const [command, ...extraArgs] = process.argv.slice(2);
 if (!Object.hasOwn(COMMANDS, command)) {
-  console.error("사용법: node scripts/supabase-local.mjs <start|reset> [supabase 옵션...]");
+  console.error("사용법: node scripts/supabase-local.mjs <start|reset|test> [supabase 옵션...]");
   process.exit(2);
 }
 
