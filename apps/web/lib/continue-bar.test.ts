@@ -19,12 +19,12 @@ test("003/AC-36 센 적이 있으면 내 정보 탭과 고객 지원 화면에�
   assert.equal(shouldShowContinueBar({ pathname: "/support", lastCountedAt: COUNTED, keyboardOpen: false }), true);
 });
 
-test("퀵 카운터 화면과 화면 키보드가 열린 동안에는 바를 숨긴다", () => {
+test("003/AC-36 퀵 카운터 화면과 화면 키보드가 열린 동안에는 바를 숨긴다", () => {
   assert.equal(shouldShowContinueBar({ pathname: "/quick-counter", lastCountedAt: COUNTED, keyboardOpen: false }), false);
   assert.equal(shouldShowContinueBar({ pathname: "/me", lastCountedAt: COUNTED, keyboardOpen: true }), false);
 });
 
-test("글자를 입력하는 요소에 포커스가 있을 때만 화면 키보드가 열린 것으로 본다", () => {
+test("003/AC-36 글자를 입력하는 요소에 포커스가 있을 때만 화면 키보드가 열린 것으로 본다", () => {
   assert.equal(isEditableElement({ tagName: "TEXTAREA" }), true);
   assert.equal(isEditableElement({ tagName: "INPUT", type: "text" }), true);
   assert.equal(isEditableElement({ tagName: "INPUT", type: "search" }), true);
