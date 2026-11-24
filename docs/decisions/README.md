@@ -1,7 +1,7 @@
 ---
 doc_type: reference
 status: active
-updated: 2026-11-20
+updated: 2026-11-24
 ---
 
 # 의사결정 기록
@@ -136,6 +136,7 @@ OD 번호도 다시 쓰지 않는다. 항목을 정하면 행을 지우지 않�
 | OD-18 | 앱의 결제 전략과 번들 ID는 어떻게 정할까? | 열람 전용 / IAP 병행 / 한국 대체 결제 / 아웃링크 허용 대기, 별도 번들 ID 예약 여부 | A1 착수 전 | [앱스토어 정책 조사](../research/2026-11-18-app-store-policy.md) |
 | OD-19 | 앱 개발은 언제 시작할까? | R3 완료 직후 / R4 유료 판매 이후 | A1 착수 전 | [로드맵](../product/roadmap.md) |
 | OD-20 | 로고 심벌과 앱 아이콘(파비콘 포함)을 만들까? | 글자 워드마크만 쓴다 / 심벌을 만든다 | R1 공개 출시 전 | [브랜드와 말투](../design/brand.md), [ADR-0014](0014-design-direction.md) |
+| OD-21 | 약관 변경 안내와 유출 통지 메일을 어느 메일 서비스로 보낼까? | Resend / Amazon SES / 그 밖의 트랜잭션 메일 서비스 | 001 메일 발송 Task 착수 전 | [001 계정](../specs/001-account/requirements.md) FR-30~FR-33, [001 시나리오 시퀀스](../specs/001-account/design/sequence.md) |
 
 OD-19의 두 선택지는 모두 A1 진입 조건인 R3 완료를 충족한다. 로드맵은 한 번에 하나의 릴리스만 진행하므로, 앱 개발 시점은 R4와의 순서를 정하는 문제다.
 

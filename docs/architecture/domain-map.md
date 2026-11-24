@@ -1,7 +1,7 @@
 ---
 doc_type: explanation
 status: active
-updated: 2026-11-20
+updated: 2026-11-24
 ---
 
 # 도메인 지도
@@ -74,6 +74,7 @@ classDiagram
   class AuthIdentity
   class TermsVersion
   class TermsAcceptance
+  class AccountDeletion
   class Project
   class Gauge
   class CounterSet
@@ -94,6 +95,7 @@ classDiagram
   <<R0>> AuthIdentity
   <<R0>> TermsVersion
   <<R0>> TermsAcceptance
+  <<R0>> AccountDeletion
   <<R1>> Project
   <<R1>> Gauge
   <<R1>> CounterSet
@@ -113,6 +115,7 @@ classDiagram
   Member "1" --> "*" AuthIdentity : "로그인 수단"
   Member "1" --> "*" TermsAcceptance : "동의 기록"
   TermsAcceptance "*" --> "1" TermsVersion : "동의한 버전"
+  Member "1" --> "0..1" AccountDeletion : "탈퇴 처리"
   Member "1" --> "*" Project : "소유"
   Project "1" --> "*" Gauge : "세탁 전후 게이지"
   Project "1" --> "1" CounterSet : "카운터 묶음"
@@ -141,10 +144,11 @@ classDiagram
 
 | 클래스 | 뜻 | 릴리스 | 속성을 정하는 문서 |
 |---|---|---|---|
-| Member | 회원 | R0 | 001 design/domain.md |
-| AuthIdentity | 로그인 수단. (provider, provider_user_id)로 회원을 식별한다 | R0 | 001 design/domain.md |
+| Member | 회원. ID는 Supabase Auth 사용자 ID와 같다 | R0 | 001 design/domain.md |
+| AuthIdentity | 회원이 가입할 때 쓴 로그인 수단. (provider, provider_user_id)로 회원을 식별하고, 이 수단이 아닌 로그인은 받지 않는다 | R0 | 001 design/domain.md |
 | TermsVersion | 이용약관·개인정보 처리방침의 버전 | R0 | 001 design/domain.md |
-| TermsAcceptance | 회원이 동의한 약관 버전과 시각 | R0 | 001 design/domain.md |
+| TermsAcceptance | 회원이 동의한 약관 버전과 시각. 추가만 한다 | R0 | 001 design/domain.md |
+| AccountDeletion | 탈퇴 처리 상태와 상태별 시각. 접수한 때부터 24시간 안에 회원 데이터를 지운다 | R0 | 001 design/domain.md |
 | Project | 뜨개 프로젝트. 다음에 뜰 작품은 '뜰 예정' 상태로 다루며, 위시리스트·큐를 따로 두지 않는다(002 Q-08) | R1 | 002 design/domain.md |
 | Gauge | 세탁 전후 게이지 기록 | R1 | 002 design/domain.md |
 | CounterSet | 한 프로젝트의 카운터 묶음. 별도 테이블로 둘지는 003 설계에서 정한다 | R1 | 003 design/domain.md |
