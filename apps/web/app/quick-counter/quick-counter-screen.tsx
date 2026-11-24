@@ -8,21 +8,17 @@ import { getRepeatPosition } from "@hamtteukka/shared";
 
 import { formatLastCounted, formatRepeatPosition, formatRows } from "@/lib/counter-format";
 import { inAppHistory, stepsBack } from "@/lib/in-app-history";
-import {
-  createQuickCounterController,
-  storageNotice,
-  type QuickCounterController,
-  type ScreenPhase,
-} from "@/lib/quick-counter-controller";
+import { storageNotice, type ScreenPhase } from "@/lib/quick-counter-controller";
 import { getQuickCounterStore } from "@/lib/quick-counter-store";
 import { browserWakeLockEnv, createScreenWakeLock, type ScreenWakeLock } from "@/lib/wake-lock";
 
 import { BottomSheet } from "../_components/bottom-sheet";
 import {
-  getCounterFeedback,
+  createBrowserController,
   subscribeNothing,
   useCounterSupport,
   useHydrated,
+  useNow,
   useQuickCounterSnapshot,
 } from "../_components/counter-hooks";
 import { CounterSettingsSheet } from "../_components/counter-settings-sheet";
@@ -31,32 +27,15 @@ import { RepeatSheet } from "./repeat-sheet";
 const COUNTING: ScreenPhase = { kind: "counting" };
 const UNDO_EXPIRED_MESSAGE = "되돌리지 못했어요. 다른 탭에서 값을 바꿨어요.";
 const TOAST_DURATION = 3_000;
-const CLOCK_INTERVAL = 30_000;
 
 const getCountingPhase = () => COUNTING;
 const getInactive = () => false;
 
 type Sheet = "menu" | "repeat" | "settings" | null;
 
-// 저장소, 피드백, 화면 꺼짐 방지는 브라우저에서만 만든다. 서버에서 그릴 때는 null이다.
-function createController(): QuickCounterController | null {
-  return typeof window === "undefined"
-    ? null
-    : createQuickCounterController(getQuickCounterStore(), undefined, getCounterFeedback());
-}
-
+// 화면 꺼짐 방지는 브라우저에서만 만든다. 서버에서 그릴 때는 null이다.
 function createWakeLock(): ScreenWakeLock | null {
   return typeof window === "undefined" ? null : createScreenWakeLock(browserWakeLockEnv());
-}
-
-/** 지난 시각 표기를 새로 그리기 위한 현재 시각. */
-function useNow(): Date {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), CLOCK_INTERVAL);
-    return () => clearInterval(id);
-  }, []);
-  return now;
 }
 
 function prefersReducedMotion(): boolean {
@@ -65,7 +44,7 @@ function prefersReducedMotion(): boolean {
 
 export function QuickCounterScreen() {
   const router = useRouter();
-  const [controller] = useState(createController);
+  const [controller] = useState(createBrowserController);
   const [wakeLock] = useState(createWakeLock);
   const { value, settings, mode } = useQuickCounterSnapshot();
   const phase = useSyncExternalStore(

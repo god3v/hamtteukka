@@ -6,7 +6,7 @@ import { getRepeatPosition } from "@hamtteukka/shared";
 
 import type { FeedbackSettings } from "./counter-feedback.ts";
 import { formatRepeatPosition } from "./counter-format.ts";
-import { createQuickCounterController, storageNotice } from "./quick-counter-controller.ts";
+import { countUp, createQuickCounterController, storageNotice } from "./quick-counter-controller.ts";
 import { createQuickCounterStore, QUICK_COUNTER_KEY, type QuickCounterStoreEnv } from "./quick-counter-store.ts";
 
 const T = "2026-11-23T10:00:00.000Z";
@@ -238,4 +238,16 @@ test("003/AC-03 값이 0일 때 빼기를 누르면 값이 바뀌지 않으므�
   controller.decrement();
 
   assert.deepEqual(played, []);
+});
+
+test("이어서 뜨기 바의 +1은 화면의 더하기와 같이 저장하고 켜 둔 피드백을 낸다", () => {
+  const browser = fakeBrowser();
+  const store = createQuickCounterStore(browser.env());
+  store.updateSettings({ vibration: true });
+  const played: FeedbackSettings[] = [];
+
+  countUp(store, T, { play: (settings) => played.push(settings) });
+
+  assert.deepEqual(store.getSnapshot().value, { total: 1, setSize: null, lastCountedAt: T });
+  assert.deepEqual(played, [{ sound: false, vibration: true, keepScreenOn: false }]);
 });
