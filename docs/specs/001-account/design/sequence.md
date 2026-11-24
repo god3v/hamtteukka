@@ -50,7 +50,7 @@ sequenceDiagram
     Auth-->>Web: 콜백 주소로 돌아온다
     Web->>Shared: completeOAuthCallback(코드, 돌아갈 경로, IP)
     Shared->>Auth: 코드를 세션으로 교환한다
-    Shared->>DB: check_login_identity()
+    Shared->>DB: verify_login_session()
     DB-->>Shared: PENDING_SIGNUP
     Shared-->>Web: PENDING_SIGNUP
     Web-->>User: 가입 동의 화면
@@ -115,9 +115,9 @@ sequenceDiagram
   User->>Web: 구글로 로그인을 누르고 인증한다
   Web->>Shared: completeOAuthCallback(코드, 돌아갈 경로, IP)
   Shared->>Auth: 코드를 세션으로 교환한다
-  Shared->>DB: check_login_identity()
+  Shared->>DB: verify_login_session()
   alt 가입한 수단으로 로그인했다
-    DB-->>Shared: MEMBER
+    DB-->>Shared: MEMBER, 지금 세션을 member_sessions에 기록
     Shared->>DB: login_logs에 로그인 기록 추가 (service role)
     Shared-->>Web: MEMBER
     Web-->>User: 처음 열려던 화면
@@ -138,7 +138,7 @@ sequenceDiagram
   end
 ```
 
-기존 회원은 약관 동의 화면 없이 처음 열려던 화면으로 돌아간다(AC-06). 로그인 기록은 회원이 가입한 수단으로 로그인했을 때 남기며, IP 주소는 콜백 요청에서 읽는다(AC-28). Supabase Auth가 같은 이메일을 이유로 구글 로그인 정보를 카카오 회원에 연결해도, 회원의 `auth_identities`에 구글이 없으므로 세션을 끝낸다(AC-07). 삭제를 마친 회원은 `members` 행이 없으므로 처음 가입하는 사용자와 같은 절차를 밟고, 이전 기록이 없는 새 회원이 된다(AC-17, AC-18).
+기존 회원은 약관 동의 화면 없이 처음 열려던 화면으로 돌아간다(AC-06). 로그인 기록은 회원이 가입한 수단으로 로그인했을 때 남기며, IP 주소는 콜백 요청에서 읽는다(AC-28). Supabase Auth가 같은 이메일을 이유로 구글 로그인 정보를 카카오 회원에 연결해도, 회원의 `auth_identities`에 구글이 없으므로 세션을 끝낸다(AC-07). 이 세션은 `member_sessions`에 기록되지 않으므로, 세션을 끝내기 전에 받은 토큰으로 Data API를 직접 불러도 회원 데이터는 RLS가 막는다. 로그아웃으로 세션을 끝내면 `member_sessions` 행도 함께 지워져, 아직 만료되지 않은 액세스 토큰도 회원 데이터에 접근하지 못한다. 삭제를 마친 회원은 `members` 행이 없으므로 처음 가입하는 사용자와 같은 절차를 밟고, 이전 기록이 없는 새 회원이 된다(AC-17, AC-18).
 
 ## 회원 기능을 열 때 계정 상태를 확인한다
 

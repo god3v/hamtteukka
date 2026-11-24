@@ -18,6 +18,8 @@ feature: 001-account
 | 회원 ID | 회원 ID는 Supabase Auth의 사용자 ID(`auth.users.id`)와 같은 값이다. 그래서 RLS 정책은 `auth.uid()`로 현재 사용자를 구한다 | ADR-0015, ADR-0004 |
 | 가입 대기 | 인증은 마쳤지만 동의를 마치지 않은 사용자는 `auth.users`에만 있고 `members` 행이 없다. 이 사용자는 회원이 아니다 | FR-05, FR-27 |
 | 네이버 연결 | 네이버는 Supabase 커스텀 OAuth 제공자(`oauth2` 유형)로 연결하고, 사용자 정보 주소에는 `apps/web`의 `/api/auth/naver/userinfo` 경로를 등록한다. 이 경로는 네이버 응답을 `toStandardUserInfo`로 바꿔 응답한다. 이메일이 없어도 가입할 수 있게 `email_optional`을 켠다 | FR-01, FR-03, ADR-0015 |
+| 제공자 식별자 | Supabase에 보내고 받는 제공자 이름은 카카오가 `kakao`, 구글이 `google`, 네이버가 `custom:naver`다. 저장하는 `provider` 값은 `kakao`, `naver`, `google`이며, 두 이름은 `toSupabaseProvider`와 `fromSupabaseProvider`가 바꾼다 | FR-01, FR-02, ADR-0015 |
+| 세션 확인 | 가입할 때 쓴 수단으로 로그인했다고 확인한 세션만 `member_sessions`에 기록하고, 회원 데이터 RLS 정책은 이 기록이 있는 세션만 허용한다 | FR-02, FR-04, FR-19 |
 | 로그인 수단 | 회원이 가입할 때 쓴 로그인 수단을 `auth_identities`에 따로 저장한다. Supabase가 같은 이메일로 다른 수단을 자동 연결해도, 이 표에 없는 수단으로 들어온 로그인은 끝낸다 | FR-02, FR-04, NFR-06 |
 | 시스템 처리 | 가입 완료, 가입 취소, 탈퇴 접수처럼 여러 표를 함께 바꾸거나 `auth` 스키마를 읽는 일은 DB 함수가 한 트랜잭션으로 처리한다 | FR-11, FR-23, FR-27 |
 | 예약 작업 | 24시간 안의 삭제와 3개월 뒤 파기는 DB의 예약 작업(pg_cron)이 실행한다. 탈퇴 처리는 저장소 파일을 지워야 하므로, pg_cron이 웹 서버의 작업 경로를 호출하고 서버가 shared 함수로 처리한다 | FR-23, FR-27, FR-29, 004 FR-17 |
@@ -188,6 +190,8 @@ classDiagram
     +requestAccountDeletion() AccountDeletionDto
     +updateSession(input) SessionStateDto
     +toStandardUserInfo(input) StandardUserInfoDto
+    +toSupabaseProvider(provider) string
+    +fromSupabaseProvider(value) LoginProvider
   }
   class accountServerJobs {
     <<module>>
@@ -249,6 +253,7 @@ accountApi는 화면, Server Action, Next.js의 요청 처리(proxy)가 호출�
 | `signOut` | 없음 | 없음 | 없음 | FR-19 |
 | `requestAccountDeletion` | 없음 | `AccountDeletionDto` | `DELETION_ALREADY_REQUESTED`, `NOT_MEMBER` | FR-22, FR-23, FR-24 |
 | `updateSession` | 요청과 응답의 쿠키 어댑터 | `SessionStateDto` (세션 유무, 세션이 끝났는지) | 없음 | FR-17, FR-18, FR-20 |
+| `toSupabaseProvider`, `fromSupabaseProvider` | `LoginProvider`, Supabase 제공자 이름 | Supabase 제공자 이름(`custom:naver` 등), `LoginProvider` | `UNEXPECTED` (알 수 없는 이름) | FR-01, FR-02 |
 | `toStandardUserInfo` | 네이버 사용자 정보 응답 | `StandardUserInfoDto` (`sub`, `email`, `name`. 이메일은 없을 수 있다) | `AUTH_FAILED` (응답 코드가 성공이 아닐 때) | FR-01, FR-02, FR-03 |
 | `recordLogin` | 회원 ID, 로그인 수단, IP 주소 | 없음 | `UNEXPECTED` | FR-29 |
 | `processAccountDeletions` | 없음 | `AccountDeletionDto[]` (이번 실행에서 처리한 탈퇴) | `UNEXPECTED` | FR-23, FR-25, 004 FR-17 |

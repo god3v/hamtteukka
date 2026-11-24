@@ -47,7 +47,7 @@ flowchart LR
   web -->|"Server Action이 shared 함수 호출"| db
   auth -->|"OAuth"| kakao
   auth -->|"OAuth"| google
-  auth -.->|"Custom OAuth"| naver
+  auth -->|"Custom OAuth"| naver
   auth -.->|"Sign in with Apple"| apple
   jobs -->|"DB 안에서 실행"| db
   expo -.->|"packages/shared 함수로 조회·저장"| db
@@ -58,7 +58,7 @@ flowchart LR
   api -.->|"결제 승인, 웹훅, 지급 요청"| pgco
 
   classDef planned stroke-dasharray: 5 5
-  class expo,naver,apple,api,pgco planned
+  class expo,apple,api,pgco planned
 ```
 
 실선은 R0~R1에서 쓰는 연결이다. 점선 화살표와 점선 테두리는 괄호에 적은 릴리스에서 추가할 연결과 구성 요소다. 화살표는 요청을 보내는 쪽에서 받는 쪽으로 향한다.
@@ -72,7 +72,7 @@ R0~R1에서 요청은 다음 네 경로로 처리된다. Supabase에 접근하�
 | 화면과 Server Action | 브라우저가 apps/web에 요청하고, Server Action이 packages/shared 함수를 호출한다 | RLS |
 | 브라우저의 직접 접근 | 브라우저에서 실행되는 packages/shared 함수가 Supabase에 직접 요청한다 | RLS |
 | 파일 다운로드 | 브라우저가 signed URL로 Storage의 private 버킷에서 파일을 받는다 | Storage 접근 정책 |
-| 로그인 | 브라우저가 Supabase Auth로 로그인을 시작하고, Auth가 카카오·구글과 OAuth를 진행한다 | Supabase Auth |
+| 로그인 | 브라우저가 Supabase Auth로 로그인을 시작하고, Auth가 카카오·네이버·구글과 OAuth를 진행한다 | Supabase Auth |
 
 브라우저도 Supabase에 직접 요청하므로, 권한은 화면 코드가 아니라 RLS로 검사한다([ADR-0004](../decisions/0004-rls-authorization.md)). 파일 본문은 Vercel 함수로 중계하지 않는 것을 기본으로 한다. Vercel 서울 리전의 Fast Data Transfer 단가가 GB당 $0.35로 높기 때문이다([Vercel icn1 요금](https://vercel.com/docs/pricing/regional-pricing/icn1)). signed URL을 발급하는 구체적인 흐름은 004 설계에서 정한다.
 
@@ -94,7 +94,7 @@ Supabase 프로젝트는 서울 리전 ap-northeast-2에 만든다. 일반 APAC 
 
 | 서비스 | 쓰임 | 결정 문서 |
 |---|---|---|
-| Auth | 신원 제공자. 카카오·구글 로그인과 세션 발급 | [ADR-0005](../decisions/0005-auth-supabase-social-login.md) |
+| Auth | 신원 제공자. 카카오·네이버·구글 로그인과 세션 발급 | [ADR-0015](../decisions/0015-auth-providers-with-naver.md) |
 | Postgres + RLS | 서비스 데이터 저장. RLS를 1차 권한 검사로 사용 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md), [ADR-0004](../decisions/0004-rls-authorization.md) |
 | Storage | 개인 PDF를 private 버킷에 보관하고 signed URL로 제공 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md) |
 | Cron·Queues | pg_cron 기반 예약 작업과 pgmq 기반 큐 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md) |

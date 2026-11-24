@@ -20,6 +20,7 @@ erDiagram
   members ||--o{ terms_acceptances : "동의 기록"
   terms_versions ||--o{ terms_acceptances : "동의한 버전"
   members ||--o{ terms_notice_acknowledgements : "변경 안내 확인"
+  members ||--o{ member_sessions : "확인된 로그인 세션"
   terms_versions ||--o{ terms_notice_acknowledgements : "확인한 버전"
   auth_users {
     uuid id PK "Supabase Auth가 관리"
@@ -59,6 +60,12 @@ erDiagram
     uuid member_id PK, FK
     uuid terms_version_id PK, FK
     timestamptz acknowledged_at
+  }
+  member_sessions {
+    uuid session_id PK, FK "auth.sessions.id"
+    uuid member_id FK
+    text provider "이번 로그인에 쓴 수단"
+    timestamptz verified_at
   }
 ```
 
@@ -137,6 +144,7 @@ erDiagram
 | terms_versions | public | 약관 버전. (kind, version)에 UNIQUE 제약을 둔다. `announced_at`은 `effective_at`보다 늦을 수 없고, 첫 버전이 아니면 시행 7일 전, `material_change`이면 30일 전보다 늦을 수 없다(CHECK 제약). 버전은 SQL 마이그레이션으로 등록한다 | FR-08, FR-09, FR-14, FR-28, FR-32 |
 | terms_acceptances | public | 동의 기록. 추가만 하며, 회원이 삭제되면 함께 지운다. 약관 버전은 지울 수 없게 참조한다 | FR-10, FR-11, FR-28, NFR-03 |
 | terms_notice_acknowledgements | public | 불리하거나 중요한 변경의 안내 창에서 확인을 누른 기록 | FR-32 |
+| member_sessions | public | 가입할 때 쓴 로그인 수단으로 로그인했다고 확인한 세션. `session_id`는 `auth.sessions(id)`를 참조하고 그 세션이 지워지면 함께 지운다. 이 행이 없는 세션의 토큰은 회원 데이터를 읽거나 쓸 수 없다 | FR-02, FR-04, FR-19 |
 | account_deletions | public | 탈퇴 처리 상태와 상태별 시각. 회원 행이 지워지면 `member_id`를 비운다(ON DELETE SET NULL). `status`가 purged가 아닌 행은 회원마다 하나만 둔다(부분 UNIQUE 인덱스). 삭제에 실패하면 시도 횟수와 마지막 실패 이유를 남긴다 | FR-22, FR-23, FR-24 |
 | login_logs | public | 로그인 기록. 회원 테이블과 FK를 두지 않아 purged 단계에서 지워지지 않고, 3개월이 지나면 예약 작업이 지운다 | FR-26, FR-29 |
 | breach_notices | public | 유출 안내. 운영자가 SQL로 등록하고, 게시 기간에는 로그인하지 않아도 읽을 수 있다 | FR-30, FR-33 |
@@ -155,10 +163,12 @@ Storage 버킷의 파일은 이 연쇄 삭제로 지워지지 않는다. 그래�
 
 | 용도 | 식 | 설명 |
 |---|---|---|
-| 자기 데이터 읽기 | `auth.uid()` | 탈퇴를 처리하는 동안에도 자기 행은 읽을 수 있다 |
-| 회원 데이터 쓰기 | `(select public.current_member_id())` | `members` 행이 있고 처리 중인 탈퇴가 없을 때만 `auth.uid()`를 알려 주고, 아니면 null을 알려 준다. 가입 대기 사용자와 탈퇴를 접수한 회원은 쓸 수 없다 |
+| 자기 데이터 읽기 | `(select public.session_member_id())` | 지금 요청의 세션이 `member_sessions`에 있을 때만 `auth.uid()`를 알려 준다. 탈퇴를 처리하는 동안에도 자기 행은 읽을 수 있다 |
+| 회원 데이터 쓰기 | `(select public.current_member_id())` | `session_member_id()`가 알려 준 회원에게 처리 중인 탈퇴가 없을 때만 그 ID를 알려 주고, 아니면 null을 알려 준다. 가입 대기 사용자, 탈퇴를 접수한 회원, 확인되지 않은 세션은 쓸 수 없다 |
 
-`current_member_id()`는 SECURITY DEFINER로 만들고 `search_path`를 고정한다. 정책에서는 행마다 다시 계산하지 않도록 `(select ...)`로 감싸 호출한다.
+두 함수는 SECURITY DEFINER로 만들고 `search_path`를 고정한다. 세션은 JWT의 `session_id` 클레임으로 찾는다. 정책에서는 행마다 다시 계산하지 않도록 `(select ...)`로 감싸 호출한다.
+
+Supabase Auth가 같은 이메일을 이유로 다른 수단을 기존 회원에 연결하면, 그 로그인으로 받은 토큰의 `sub`도 기존 회원 ID가 된다. `auth.uid()`만 비교하면 콜백이 세션을 끝내기 전에 그 토큰으로 Data API를 직접 불러 회원 데이터를 읽을 수 있다. 그래서 회원 데이터 정책은 `auth.uid()` 대신 위 두 함수를 쓴다. 가입한 수단과 다른 수단으로 시작한 세션은 `member_sessions` 행이 만들어지지 않으므로 처음부터 회원 데이터에 접근하지 못한다. 로그아웃이나 탈퇴로 `auth.sessions` 행이 지워지면 `member_sessions` 행도 함께 지워지므로, 만료되지 않은 액세스 토큰이 남아 있어도 회원 데이터에 접근할 수 없다(FR-04, FR-19, FR-24).
 
 ## DB 함수와 예약 작업
 
@@ -166,9 +176,9 @@ Storage 버킷의 파일은 이 연쇄 삭제로 지워지지 않는다. 그래�
 
 | 함수 | 실행하는 쪽 | 하는 일 | 관련 FR/AC |
 |---|---|---|---|
-| `current_member_id()` | RLS 정책 | 위 표의 현재 회원 ID를 알려 준다 | NFR-02, FR-24 |
-| `check_login_identity()` | `authenticated` | 이번 로그인에 쓴 로그인 수단 정보(`auth.identities`에서 `last_sign_in_at`이 가장 늦은 행)를 회원의 `auth_identities`와 비교해 `MEMBER`, `PENDING_SIGNUP`, `DELETION_PENDING`, `PROVIDER_MISMATCH` 가운데 하나와 가입한 로그인 수단을 알려 준다 | FR-04, FR-24, AC-07, AC-17, AC-18 |
-| `complete_signup(terms_version_ids, age_confirmed)` | `authenticated` | 만 14세 이상 확인과 두 문서가 지금 시행 중인 버전인지 검사한 뒤 `members`, `auth_identities`, `terms_acceptances` 행을 한 트랜잭션으로 만든다. 이메일은 `auth.users.email`에서 복사하고, 로그인 수단은 이번 로그인에 쓴 `auth.identities` 행에서 읽는다 | FR-02, FR-03, FR-05, FR-10, FR-11, FR-15, FR-16, AC-01, AC-02, AC-03, AC-09 |
+| `session_member_id()`, `current_member_id()` | RLS 정책 | 위 표의 현재 회원 ID를 알려 준다 | NFR-02, FR-04, FR-24 |
+| `verify_login_session()` | `authenticated` | 이번 로그인에 쓴 로그인 수단 정보(`auth.identities`에서 `last_sign_in_at`이 가장 늦은 행)를 회원의 `auth_identities`와 비교해 `MEMBER`, `PENDING_SIGNUP`, `DELETION_PENDING`, `PROVIDER_MISMATCH` 가운데 하나와 가입한 로그인 수단을 알려 준다. `MEMBER`이면 지금 세션을 `member_sessions`에 기록한다. `auth.identities.provider`의 `custom:naver`는 `naver`로 바꿔 비교한다 | FR-02, FR-04, FR-24, AC-07, AC-17, AC-18 |
+| `complete_signup(terms_version_ids, age_confirmed)` | `authenticated` | 만 14세 이상 확인과 두 문서가 지금 시행 중인 버전인지 검사한 뒤 `members`, `auth_identities`, `terms_acceptances` 행을 한 트랜잭션으로 만들고, 지금 세션을 `member_sessions`에 기록한다. 이메일은 `auth.users.email`에서 복사하고, 로그인 수단은 이번 로그인에 쓴 `auth.identities` 행에서 읽는다 | FR-02, FR-03, FR-05, FR-10, FR-11, FR-15, FR-16, AC-01, AC-02, AC-03, AC-09 |
 | `cancel_signup()` | `authenticated` | `members` 행이 없는 현재 사용자의 `auth.users` 행을 지운다 | FR-16, FR-27, AC-19 |
 | `account_gate()` | `authenticated` | 계정 상태 값과, 안내할 약관 버전이나 유출 안내를 알려 준다. 판단 순서는 [상태 전이](state.md#계정-상태-확인-순서)를 따른다 | FR-05, FR-24, FR-28, FR-30, FR-32 |
 | `request_account_deletion()` | `authenticated` | 현재 회원의 `account_deletions` 행을 requested로 추가한다 | FR-22, FR-23, AC-12 |
@@ -192,11 +202,11 @@ Storage 버킷의 파일은 이 연쇄 삭제로 지워지지 않는다. 그래�
 
 | 테이블 | 작업 | 허용 대상(역할) | USING 조건 | WITH CHECK 조건 | 근거 FR/AC |
 |---|---|---|---|---|---|
-| members | SELECT | `authenticated`, 본인 | `id = auth.uid()` | 해당 없음 | NFR-02, AC-01, AC-14 |
+| members | SELECT | `authenticated`, 본인 | `id = (select session_member_id())` | 해당 없음 | NFR-02, AC-01, AC-14 |
 | members | INSERT | 허용하지 않음 (`complete_signup`만 만든다) | 정책 없음 | 정책 없음 | FR-05, AC-03, AC-09 |
 | members | UPDATE | 허용하지 않음 (R0에는 회원이 고치는 열이 없다) | 정책 없음 | 정책 없음 | NFR-02, AC-14 |
 | members | DELETE | 허용하지 않음 (탈퇴 예약 작업만 지운다) | 정책 없음 | 해당 없음 | FR-23, AC-13 |
-| auth_identities | SELECT | `authenticated`, 본인 | `member_id = auth.uid()` | 해당 없음 | NFR-02, AC-07 |
+| auth_identities | SELECT | `authenticated`, 본인 | `member_id = (select session_member_id())` | 해당 없음 | NFR-02, AC-07 |
 | auth_identities | INSERT | 허용하지 않음 (`complete_signup`만 만든다) | 정책 없음 | 정책 없음 | FR-02, AC-01 |
 | auth_identities | UPDATE | 허용하지 않음 | 정책 없음 | 정책 없음 | FR-04, AC-07 |
 | auth_identities | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | FR-25, AC-13 |
@@ -204,15 +214,15 @@ Storage 버킷의 파일은 이 연쇄 삭제로 지워지지 않는다. 그래�
 | terms_versions | INSERT | 허용하지 않음 (마이그레이션으로 등록한다) | 정책 없음 | 정책 없음 | FR-08, AC-21 |
 | terms_versions | UPDATE | 허용하지 않음 | 정책 없음 | 정책 없음 | FR-08, AC-22 |
 | terms_versions | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | FR-08, AC-21 |
-| terms_acceptances | SELECT | `authenticated`, 본인 | `member_id = auth.uid()` | 해당 없음 | NFR-02, AC-14 |
+| terms_acceptances | SELECT | `authenticated`, 본인 | `member_id = (select session_member_id())` | 해당 없음 | NFR-02, AC-14 |
 | terms_acceptances | INSERT | `authenticated`, 회원 | 해당 없음 | `member_id = (select current_member_id())` 이고 `agreed` 이고 `terms_version_id`가 `effective_at <= now()`인 그 종류의 최신 버전 | FR-11, FR-28, AC-21, AC-29 |
 | terms_acceptances | UPDATE | 허용하지 않음 | 정책 없음 | 정책 없음 | NFR-03, AC-15 |
 | terms_acceptances | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | NFR-03, AC-15 |
-| terms_notice_acknowledgements | SELECT | `authenticated`, 본인 | `member_id = auth.uid()` | 해당 없음 | FR-32, AC-30 |
+| terms_notice_acknowledgements | SELECT | `authenticated`, 본인 | `member_id = (select session_member_id())` | 해당 없음 | FR-32, AC-30 |
 | terms_notice_acknowledgements | INSERT | `authenticated`, 회원 | 해당 없음 | `member_id = (select current_member_id())` 이고 대상 버전이 `material_change`이며 `announced_at <= now()` | FR-32, AC-30, AC-33 |
 | terms_notice_acknowledgements | UPDATE | 허용하지 않음 | 정책 없음 | 정책 없음 | FR-32, AC-30 |
 | terms_notice_acknowledgements | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | FR-32, AC-30 |
-| account_deletions | SELECT | `authenticated`, 본인 | `member_id = auth.uid()` | 해당 없음 | FR-24, AC-12, AC-17 |
+| account_deletions | SELECT | `authenticated`, 본인 | `member_id = (select session_member_id())` | 해당 없음 | FR-24, AC-12, AC-17 |
 | account_deletions | INSERT | 허용하지 않음 (`request_account_deletion`만 만든다) | 정책 없음 | 정책 없음 | FR-22, AC-12 |
 | account_deletions | UPDATE | 허용하지 않음 (예약 작업만 바꾼다) | 정책 없음 | 정책 없음 | FR-23, AC-13 |
 | account_deletions | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | FR-23, AC-13 |
@@ -224,7 +234,7 @@ Storage 버킷의 파일은 이 연쇄 삭제로 지워지지 않는다. 그래�
 | breach_notices | INSERT | 허용하지 않음 (운영자가 SQL로 등록한다) | 정책 없음 | 정책 없음 | FR-30, AC-26 |
 | breach_notices | UPDATE | 허용하지 않음 | 정책 없음 | 정책 없음 | FR-33, AC-32 |
 | breach_notices | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | FR-30, AC-26 |
-| breach_notice_views | SELECT | `authenticated`, 본인 | `member_id = auth.uid()` | 해당 없음 | FR-30, AC-26 |
+| breach_notice_views | SELECT | `authenticated`, 본인 | `member_id = (select session_member_id())` | 해당 없음 | FR-30, AC-26 |
 | breach_notice_views | INSERT | `authenticated`, 회원 | 해당 없음 | `member_id = (select current_member_id())` 이고 대상 안내가 게시 중 | FR-30, AC-26, AC-32 |
 | breach_notice_views | UPDATE | 허용하지 않음 | 정책 없음 | 정책 없음 | FR-30, AC-26 |
 | breach_notice_views | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | FR-30, AC-26 |
@@ -232,8 +242,12 @@ Storage 버킷의 파일은 이 연쇄 삭제로 지워지지 않는다. 그래�
 | email_deliveries | INSERT | 허용하지 않음 (서버 작업과 발송 대기 함수만 만든다) | 정책 없음 | 정책 없음 | FR-32, AC-34 |
 | email_deliveries | UPDATE | 허용하지 않음 (서버 작업만 결과를 기록한다) | 정책 없음 | 정책 없음 | FR-32, AC-30 |
 | email_deliveries | DELETE | 허용하지 않음 | 정책 없음 | 해당 없음 | FR-33, AC-32 |
+| member_sessions | SELECT | 허용하지 않음 (RLS 정책 안의 함수만 읽는다) | 정책 없음 | 해당 없음 | FR-04, AC-07 |
+| member_sessions | INSERT | 허용하지 않음 (`verify_login_session`과 `complete_signup`만 만든다) | 정책 없음 | 정책 없음 | FR-04, AC-07 |
+| member_sessions | UPDATE | 허용하지 않음 | 정책 없음 | 정책 없음 | FR-04, AC-07 |
+| member_sessions | DELETE | 허용하지 않음 (`auth.sessions` 연쇄 삭제만 지운다) | 정책 없음 | 해당 없음 | FR-19, AC-11 |
 
-회원이 직접 쓰는 테이블은 재동의 기록, 안내 확인 기록, 유출 안내 확인 기록 세 가지뿐이다. 회원 생성, 탈퇴 접수, 삭제처럼 다른 테이블이나 `auth` 스키마를 함께 바꾸는 일은 위의 DB 함수가 처리하고, 함수 안에서 같은 조건을 검사한다. AC-14와 AC-15는 회원 A의 세션으로 회원 B의 행을 읽거나, 자기 동의 기록을 고치고 지우는 요청이 거부되는지 테스트로 확인한다.
+회원이 직접 쓰는 테이블은 재동의 기록, 안내 확인 기록, 유출 안내 확인 기록 세 가지뿐이다. 회원 생성, 탈퇴 접수, 삭제처럼 다른 테이블이나 `auth` 스키마를 함께 바꾸는 일은 위의 DB 함수가 처리하고, 함수 안에서 같은 조건을 검사한다. AC-14와 AC-15는 회원 A의 세션으로 회원 B의 행을 읽거나, 자기 동의 기록을 고치고 지우는 요청이 거부되는지 테스트로 확인한다. AC-07은 자동 연결된 다른 수단의 토큰으로 회원 행을 읽는 요청이 빈 결과로 끝나는지도 함께 확인한다. `member_sessions`가 `auth.sessions`를 참조할 수 있는지는 구현 Task에서 로컬 스택으로 확인하고, 안 되면 이 표를 먼저 고친다.
 
 ## 관련 문서
 
