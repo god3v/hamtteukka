@@ -139,6 +139,28 @@
   --text-micro--font-weight: 600;
 }
 
+/*
+ * 움직임. docs/design/visual-system.md의 움직임 절을 따른다.
+ * 카운터 화면과 바텀 시트는 아래에서 올라오고 닫으면 내려간다. motion-safe:animate-sheet-up처럼 써서
+ * 동작 줄이기를 켠 기기에서는 움직임 없이 바로 보여 준다.
+ */
+@theme {
+  --animate-sheet-up: sheet-up 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-sheet-down: sheet-down 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes sheet-down {
+    to {
+      transform: translateY(100%);
+    }
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

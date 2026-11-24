@@ -1,7 +1,7 @@
 ---
 doc_type: reference
 status: active
-updated: 2026-11-19
+updated: 2026-11-20
 ---
 
 # 의사결정 기록
@@ -116,13 +116,13 @@ OD 번호도 다시 쓰지 않는다. 항목을 정하면 행을 지우지 않�
 
 | ID | 질문 | 선택지 | 결정 시점 | 관련 문서 |
 |---|---|---|---|---|
-| OD-01 | 만 14세 미만의 가입을 어떻게 처리할까? | 가입 차단 / 법정대리인 동의 절차 (제안: 차단) | R0 착수 전 | [001 계정](../specs/001-account/requirements.md), [앱스토어 정책 조사](../research/2026-11-18-app-store-policy.md) |
-| OD-02 | 탈퇴한 회원의 데이터를 언제 삭제할까? | 즉시 삭제 / 유예 기간 뒤 삭제 | R0 착수 전 | [001 계정](../specs/001-account/requirements.md) |
-| OD-03 | 개인 PDF 업로드 용량을 얼마로 제한할까? | 파일당 한도와 회원당 한도의 값 | R1 착수 전 | [004 내 도안 파일 첨부](../specs/004-pattern-files/requirements.md), [ADR-0002](0002-stack-nextjs-supabase-vercel.md) |
+| OD-01 | 만 14세 미만의 가입을 어떻게 처리할까? | 가입 차단 / 법정대리인 동의 절차 (제안: 차단) | 결정됨 (2026-11-19) | [001 계정](../specs/001-account/requirements.md)의 Q-01 해결 기록, [앱스토어 정책 조사](../research/2026-11-18-app-store-policy.md), [계정 정책 확인](../research/2026-11-19-account-policy-facts.md) |
+| OD-02 | 탈퇴한 회원의 데이터를 언제 삭제할까? | 즉시 삭제 / 유예 기간 뒤 삭제 | 결정됨 (2026-11-19) | [001 계정](../specs/001-account/requirements.md)의 Q-02 해결 기록, [계정 정책 확인](../research/2026-11-19-account-policy-facts.md) |
+| OD-03 | 개인 PDF 업로드 용량을 얼마로 제한할까? | 파일당 한도와 회원당 한도의 값 | 결정됨 (2026-11-20) | [004 내 도안 파일 첨부](../specs/004-pattern-files/requirements.md)의 Q-01, Q-02 해결 기록(파일당 50MB, 회원당 200MB, 공개 출시 전 다시 판단), [ADR-0002](0002-stack-nextjs-supabase-vercel.md) |
 | OD-04 | 사업자등록은 언제 할까? | R1 공개 출시 시점 / R4 유료 판매 직전 (Vercel Hobby 비상업 조건과 연결) | R1 공개 출시 전 | [ADR-0002](0002-stack-nextjs-supabase-vercel.md), [로드맵](../product/roadmap.md) |
 | OD-05 | 내 도안함의 다운로드 기간을 둘까? | 무기한 / 12개월 | R2 착수 전 | [ADR-0007](0007-sales-ready-data-model.md), [참고 서비스 조사](../research/2026-11-18-reference-services.md) |
 | OD-06 | 도안 영상은 어떻게 받을까? | 외부 URL만 허용 / 직접 호스팅 | R2 착수 전 | [기능 목록](../product/feature-catalog.md), [스택 조사](../research/2026-11-18-stack-options.md) |
-| OD-07 | 비회원도 검색할 수 있게 할까? | 비회원 허용 / 회원 전용 | R2 착수 전 | [기능 목록](../product/feature-catalog.md) |
+| OD-07 | 비회원도 검색할 수 있게 할까? | 비회원 허용 / 회원 전용 | 결정됨 (2026-11-19) | [기능 목록](../product/feature-catalog.md)의 이용 대상별 분류. 비회원도 도안을 둘러보고 검색하며, 받기·찜·후기·문의 작성은 회원만 한다 |
 | OD-08 | 한국어 검색 엔진은 무엇으로 할까? | PGroonga와 pg_trgm을 실측한 뒤 선택 / 품질이 부족하면 Meilisearch | R2 착수 전 | [스택 조사](../research/2026-11-18-stack-options.md) |
 | OD-09 | 커뮤니티 작성자를 어떻게 표시할까? | 완전 익명 / 닉네임 | R3 착수 전 | [참고 서비스 조사](../research/2026-11-18-reference-services.md) |
 | OD-10 | 탈퇴한 회원의 게시물을 어떻게 처리할까? | 모두 삭제 / 내용만 지우고 자리 표시 유지 | R3 착수 전 | [앱스토어 정책 조사](../research/2026-11-18-app-store-policy.md) |

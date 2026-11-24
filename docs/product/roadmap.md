@@ -1,7 +1,7 @@
 ---
 doc_type: reference
 status: active
-updated: 2026-11-18
+updated: 2026-11-20
 ---
 
 # 함뜨까 출시 로드맵
@@ -33,7 +33,7 @@ flowchart TD
 | 코드 | 마일스톤 이름 | 범위 | 스펙 폴더 | 기능 수 | 진입 조건 | 완료 조건 |
 |---|---|---|---|---|---|---|
 | R0 | R0 기반 | 모노레포 뼈대, Supabase·Vercel 서울 리전, CI, 화면 틀, 지원 페이지, 계정 | [001-account](../specs/001-account/requirements.md) | 6 | ADR-0001~0011 확정 | 운영 도메인에서 가입, 로그인, 탈퇴가 동작한다 |
-| R1 | R1 MVP | 프로젝트 기록, 위시리스트·큐, 게이지, 단수 카운터(기본·퀵·다중·반복), 내 도안 파일 첨부 | [002-projects](../specs/002-projects/requirements.md), [003-row-counter](../specs/003-row-counter/requirements.md), [004-pattern-files](../specs/004-pattern-files/requirements.md) | 8 | R0 완료 | 2주 비공개 베타 뒤 공개 출시한다 |
+| R1 | R1 MVP | 프로젝트 기록, 뜰 예정 프로젝트, 게이지, 단수 카운터(기본·퀵·다중·반복), 내 도안 파일 첨부 | [002-projects](../specs/002-projects/requirements.md), [003-row-counter](../specs/003-row-counter/requirements.md), [004-pattern-files](../specs/004-pattern-files/requirements.md) | 8 | R0 완료 | 2주 비공개 베타 뒤 공개 출시한다 |
 | R1+ | R1+ 도구 보강 | 타이머, 통계, 웹 PDF 뷰어, 실 보관함, 계산기, 내보내기, 네이버 로그인 | 아직 없음 | 10 | R1 공개 출시 | 항목마다 따로 배포한다 |
 | R2 | R2 무료 도안 배포 | 작가 프로필, 도안 등록·심사, 내 도안함, 업데이트 알림, 검색·필터, 관리자 콘솔 | 아직 없음 | 16 | R1 공개 출시 | 외부 작가의 무료 도안이 공개되고, 받기와 업데이트 알림이 동작한다 |
 | R3 | R3 커뮤니티 | 게시판, 신고·차단·금칙어, 후기, Q&A, 완성작 갤러리, 큐레이션 | 아직 없음 | 15 | R2 완료 | 신고 처리 큐를 운영할 수 있다 |
@@ -82,7 +82,7 @@ flowchart TD
 | ID | 기능 | 담는 곳 |
 |---|---|---|
 | F-PROJ-01 | 뜨개 프로젝트 기록 | [002-projects](../specs/002-projects/requirements.md) |
-| F-PROJ-02 | 위시리스트와 뜰 예정 목록(큐) | [002-projects](../specs/002-projects/requirements.md) |
+| F-PROJ-02 | 뜰 예정 프로젝트 | [002-projects](../specs/002-projects/requirements.md) |
 | F-TOOL-01 | 게이지 기록(세탁 전후) | [002-projects](../specs/002-projects/requirements.md) |
 | F-COUNTER-01 | 단수 카운터 기본 기능 | [003-row-counter](../specs/003-row-counter/requirements.md) |
 | F-COUNTER-02 | 로그인 없이 쓰는 퀵 카운터 | [003-row-counter](../specs/003-row-counter/requirements.md) |
@@ -92,7 +92,7 @@ flowchart TD
 
 **정할 결정**
 
-- [OD-03](../decisions/README.md) 개인 PDF 업로드 용량 한도: 파일당 한도와 회원당 한도를 R1 착수 전에 정한다.
+- [OD-03](../decisions/README.md) 개인 PDF 업로드 용량 한도: 2026-11-20에 [004 요구사항](../specs/004-pattern-files/requirements.md)의 Q-01, Q-02에서 파일당 50MB, 회원당 합계 200MB로 정했다. 회원당 한도는 공개 출시 전에 다시 정한다.
 - [OD-04](../decisions/README.md) 사업자등록 시점: 공개 출시 때 할지 유료 판매 직전에 할지 R1 공개 출시 전에 정한다. 이 결정은 Vercel Hobby의 비상업 이용 조건과 연결된다.
 
 **참고**
@@ -100,7 +100,8 @@ flowchart TD
 - 2주 동안 비공개 베타를 운영한 뒤 공개 출시한다.
 - 공개 출시 때 Vercel Pro(월 $20)와 Supabase Pro(월 $25)로 바꾸며, 합계는 월 약 $45다.
 - Vercel 이용약관은 Hobby 플랜을 개인·비상업 용도로만 허용한다([Vercel 이용약관](https://vercel.com/legal/terms)). Supabase Free는 1주 동안 활동이 없으면 프로젝트를 일시 중지한다([Supabase 요금](https://supabase.com/pricing)).
-- 세 스펙 폴더의 요구사항은 검토 대기 상태이고, 승인된 뒤에 설계를 작성한다.
+- 각 스펙의 설계는 그 스펙의 요구사항이 승인(`status: approved`)된 뒤에 작성한다. 스펙마다 승인 상태가 다르므로 각 요구사항 문서의 `status`를 확인한다.
+- 퀵 카운터(F-COUNTER-02)는 R1 진입 조건의 예외로, R0를 진행하는 동안 먼저 설계하고 만든다(2026-11-20 결정). 값을 그 브라우저에만 저장해 계정과 DB에 기대지 않기 때문이다. 로그인한 뒤 퀵 카운터를 프로젝트로 옮기는 기능(003 FR-16~FR-18)은 R1에서 다른 카운터 기능과 함께 만든다.
 
 ### R1+ 도구 보강
 
@@ -158,7 +159,7 @@ flowchart TD
 
 - [OD-05](../decisions/README.md) 내 도안함 다운로드 기간: 무기한 또는 12개월 중에서 고른다.
 - [OD-06](../decisions/README.md) 도안 영상: 외부 URL만 받을지 직접 호스팅할지 정한다.
-- [OD-07](../decisions/README.md) 검색의 비회원 허용 여부를 정한다.
+- [OD-07](../decisions/README.md) 검색의 비회원 허용 여부는 2026-11-19에 정했다. 비회원도 도안을 둘러보고 검색하며, 받기·찜·후기·문의 작성은 회원만 한다([기능 목록](feature-catalog.md#이용-대상별-분류)).
 - [OD-08](../decisions/README.md) 한국어 검색 엔진: PGroonga와 pg_trgm을 실측한 뒤 정하고, 부족하면 Meilisearch를 검토한다.
 
 **참고**
@@ -288,7 +289,8 @@ flowchart TD
 
 ## 진행 원칙
 
-- **한 번에 한 단계(WIP 1)**: 진행 중인 출시 단계는 항상 하나다. R1+ 항목은 R1과 R2 사이에 끼워 넣고, R4와 A1도 동시에 진행하지 않는다.
+- **한 번에 한 단계(WIP 1)**: 진행 중인 출시 단계는 항상 하나다. R1+ 항목은 R1과 R2 사이에 끼워 넣고, R4와 A1도 동시에 진행하지 않는다. 이 원칙은 설계와 구현에 적용하며, 다음 단계 기능의 요구사항 검토는 미리 할 수 있다.
+- **요구사항 먼저**: 기능을 비회원과 회원 기준으로 나눈 [기능 목록](feature-catalog.md#이용-대상별-분류)의 이용 대상을 정한 뒤, 계정 기능(001)의 설계에 앞서 R1 요구사항(002~004)을 확정한다. 계정 설계가 뒤 단계 기능에 필요한 회원 구조와 비회원 흐름을 놓치지 않게 하려는 순서다.
 - **SDD 적용 기준**: 새 테이블이나 새 화면을 추가하거나 권한 규칙을 바꾸는 작업은 SDD 절차를 따른다. 버그 수정, 문구 수정, 리팩터링은 SDD 없이 PR로 바로 처리한다. 단계별 산출물과 게이트는 [SDD 진행 가이드](../sdd-guide.md)에 있다.
 - **Task 하나에 PR 하나**: 계획된 작업은 Task 이슈 하나를 PR 하나로 끝내고, PR 본문에 `Closes #번호`를 적는다. 문서 문구나 설정 같은 작은 수정은 이슈 없이 처리한다([ADR-0012](../decisions/0012-issue-for-planned-work-only.md)). Feature 이슈는 스펙 폴더나 기능 묶음 하나에 대응하고, Task 이슈는 Feature 이슈의 하위 이슈로 만든다.
 
@@ -312,11 +314,12 @@ flowchart TD
 
 ## 현재 위치
 
-2026-11-18 기준으로 함뜨까는 R0 준비 단계에 있다. 문서 체계를 만들고 GitHub 이슈를 등록하는 작업을 마치면 바로 R0에 착수한다.
+2026-11-19 기준으로 함뜨까는 R0 단계에 있다. 개발 기반 작업(R0 인프라)은 끝났고, 계정 기능(001)이 남아 있다.
 
 - R0 진입 조건인 ADR-0001~0011은 2026-11-18에 확정되었다.
-- R0 착수 전에 [OD-01](../decisions/README.md)과 [OD-02](../decisions/README.md)를 정한다.
-- R0와 R1의 요구사항 4건은 검토 대기 상태이며, 승인되면 설계 단계로 넘어간다.
+- 001 계정 요구사항은 2026-11-19에 승인되었고, 이때 [OD-01](../decisions/README.md)과 [OD-02](../decisions/README.md)도 정했다.
+- 기능 86개의 이용 대상(비회원, 회원)은 2026-11-19에 정했다.
+- 다음 작업은 R1 요구사항 3건(002~004)의 확인 질문을 해결하고 승인하는 것이다. 세 문서가 승인되면 001 설계를 시작한다.
 
 ## 관련 문서
 

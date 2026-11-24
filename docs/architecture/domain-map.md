@@ -1,7 +1,7 @@
 ---
 doc_type: explanation
 status: active
-updated: 2026-11-18
+updated: 2026-11-20
 ---
 
 # 도메인 지도
@@ -145,7 +145,7 @@ classDiagram
 | AuthIdentity | 로그인 수단. (provider, provider_user_id)로 회원을 식별한다 | R0 | 001 design/domain.md |
 | TermsVersion | 이용약관·개인정보 처리방침의 버전 | R0 | 001 design/domain.md |
 | TermsAcceptance | 회원이 동의한 약관 버전과 시각 | R0 | 001 design/domain.md |
-| Project | 뜨개 프로젝트. 위시리스트·큐를 같은 애그리거트로 다룰지는 002 설계에서 정한다 | R1 | 002 design/domain.md |
+| Project | 뜨개 프로젝트. 다음에 뜰 작품은 '뜰 예정' 상태로 다루며, 위시리스트·큐를 따로 두지 않는다(002 Q-08) | R1 | 002 design/domain.md |
 | Gauge | 세탁 전후 게이지 기록 | R1 | 002 design/domain.md |
 | CounterSet | 한 프로젝트의 카운터 묶음. 별도 테이블로 둘지는 003 설계에서 정한다 | R1 | 003 design/domain.md |
 | Counter | 단수 카운터. 1세트당 단수 설정, 주·보조 연결, 카운트 이력을 포함한다 | R1 | 003 design/domain.md |
@@ -161,7 +161,7 @@ classDiagram
 | LedgerEntry | 정산 원장 항목 (예정) | R4 | R4 설계 |
 | Payout | PG 지급대행을 통한 작가 지급 (예정) | R4 | R4 설계 |
 
-로그인 없이 쓰는 퀵 카운터(F-COUNTER-02)의 저장 위치와 로그인 후 옮기는 방식은 003 요구사항과 설계에서 정한다.
+로그인 없이 쓰는 퀵 카운터(F-COUNTER-02)는 서버 테이블 없이 그 브라우저에만 저장한다. 값 계산은 packages/shared의 counterCore 순수 함수가 맡고, 프로젝트 카운터도 같은 함수를 쓴다([003 design/domain.md](../specs/003-row-counter/design/domain.md)). 로그인한 뒤 프로젝트 카운터로 옮기는 방식은 003의 2차 설계에서 정한다.
 
 ## 경계를 이렇게 나눈 이유
 
