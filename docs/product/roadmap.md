@@ -1,7 +1,7 @@
 ---
 doc_type: reference
 status: active
-updated: 2026-11-20
+updated: 2026-11-24
 ---
 
 # 함뜨까 출시 로드맵
@@ -32,9 +32,9 @@ flowchart TD
 
 | 코드 | 마일스톤 이름 | 범위 | 스펙 폴더 | 기능 수 | 진입 조건 | 완료 조건 |
 |---|---|---|---|---|---|---|
-| R0 | R0 기반 | 모노레포 뼈대, Supabase·Vercel 서울 리전, CI, 화면 틀, 지원 페이지, 계정 | [001-account](../specs/001-account/requirements.md) | 6 | ADR-0001~0011 확정 | 운영 도메인에서 가입, 로그인, 탈퇴가 동작한다 |
+| R0 | R0 기반 | 모노레포 뼈대, Supabase·Vercel 서울 리전, CI, 화면 틀, 지원 페이지, 계정 | [001-account](../specs/001-account/requirements.md) | 7 | ADR-0001~0011 확정 | 운영 도메인에서 가입, 로그인, 탈퇴가 동작한다 |
 | R1 | R1 MVP | 프로젝트 기록, 뜰 예정 프로젝트, 게이지, 단수 카운터(기본·퀵·다중·반복), 내 도안 파일 첨부 | [002-projects](../specs/002-projects/requirements.md), [003-row-counter](../specs/003-row-counter/requirements.md), [004-pattern-files](../specs/004-pattern-files/requirements.md) | 8 | R0 완료 | 2주 비공개 베타 뒤 공개 출시한다 |
-| R1+ | R1+ 도구 보강 | 타이머, 통계, 웹 PDF 뷰어, 실 보관함, 계산기, 내보내기, 네이버 로그인 | 아직 없음 | 10 | R1 공개 출시 | 항목마다 따로 배포한다 |
+| R1+ | R1+ 도구 보강 | 타이머, 통계, 웹 PDF 뷰어, 실 보관함, 계산기, 내보내기 | 아직 없음 | 9 | R1 공개 출시 | 항목마다 따로 배포한다 |
 | R2 | R2 무료 도안 배포 | 작가 프로필, 도안 등록·심사, 내 도안함, 업데이트 알림, 검색·필터, 관리자 콘솔 | 아직 없음 | 16 | R1 공개 출시 | 외부 작가의 무료 도안이 공개되고, 받기와 업데이트 알림이 동작한다 |
 | R3 | R3 커뮤니티 | 게시판, 신고·차단·금칙어, 후기, Q&A, 완성작 갤러리, 큐레이션 | 아직 없음 | 15 | R2 완료 | 신고 처리 큐를 운영할 수 있다 |
 | R4 | R4 유료 판매 | `apps/api` 추가, 결제·환불, 정산 원장, 지급대행, 세무 보고 | 아직 없음 | 11 | 사업자등록, 통신판매업 신고, 거래 구조 ADR과 PG ADR 확정 | 첫 실결제와 첫 지급을 마친다 |
@@ -49,11 +49,12 @@ flowchart TD
 
 **목표**: 서비스 운영에 필요한 기반을 갖추고, 운영 도메인에서 가입, 로그인, 탈퇴가 동작하게 한다.
 
-**포함 기능 (6개)**
+**포함 기능 (7개)**
 
 | ID | 기능 | 담는 곳 |
 |---|---|---|
 | F-ACCT-01 | 카카오·구글 소셜 로그인과 계정 식별 구조 | [001-account](../specs/001-account/requirements.md) |
+| F-ACCT-02 | 네이버 로그인 | [001-account](../specs/001-account/requirements.md) |
 | F-ACCT-04 | 회원 탈퇴와 데이터 삭제 | [001-account](../specs/001-account/requirements.md) |
 | F-ACCT-05 | 약관·개인정보 처리방침 버전 관리, 동의 기록, 만 14세 확인 | [001-account](../specs/001-account/requirements.md) |
 | F-UX-01 | 반응형 모바일 웹과 다운로드 환경 안내 | R0 인프라 Feature |
@@ -70,7 +71,7 @@ flowchart TD
 - 인프라 작업은 pnpm 워크스페이스와 Turborepo로 `apps/web`, `packages/shared`, `supabase/`를 만든다([ADR-0001](../decisions/0001-monorepo-structure.md)).
 - Supabase 프로젝트는 서울 리전(ap-northeast-2)에 만들고, Vercel 함수는 서울 리전(icn1)에 고정한다([ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md)).
 - F-UX-01, F-UX-02, F-SUPPORT-01은 스펙 폴더 없이 R0 인프라 Feature 안에서 처리한다.
-- 로그인은 카카오와 구글만 제공한다. 회원은 이메일이 아니라 로그인 제공자와 제공자 사용자 ID의 조합으로 식별한다([ADR-0005](../decisions/0005-auth-supabase-social-login.md)).
+- 로그인은 카카오, 네이버, 구글로 제공한다. 네이버는 Supabase 커스텀 OAuth 제공자로 연결하며, 2026-11-24에 R1+에서 R0로 앞당겼다. 회원은 이메일이 아니라 로그인 제공자와 제공자 사용자 ID의 조합으로 식별한다([ADR-0015](../decisions/0015-auth-providers-with-naver.md)).
 - 개발 기간에는 Vercel Hobby와 Supabase Free를 써서 비용 없이 운영한다.
 
 ### R1 MVP
@@ -107,11 +108,10 @@ flowchart TD
 
 **목표**: R1 사용자 피드백을 반영하여 개인 도구를 작은 배포로 보강한다.
 
-**포함 기능 (10개)**
+**포함 기능 (9개)**
 
 | ID | 기능 |
 |---|---|
-| F-ACCT-02 | 네이버 로그인 |
 | F-PROJ-03 | 작업 타이머와 시간 기록 |
 | F-PROJ-04 | 뜨개 통계·리포트와 연간 챌린지 |
 | F-COUNTER-05 | 특정 단 리마인더 |
@@ -127,7 +127,6 @@ flowchart TD
 **참고**
 
 - 항목마다 따로 배포하며, R1과 R2 사이에 끼워 넣는다.
-- 네이버 로그인(F-ACCT-02)은 Supabase Custom OAuth Provider로 연결한다([ADR-0005](../decisions/0005-auth-supabase-social-login.md)).
 - R2의 내 도안함에서 프로젝트 시작(F-STORE-08)은 웹 PDF 뷰어(F-VIEWER-02)에 의존하므로, F-VIEWER-02를 먼저 배포한다.
 
 ### R2 무료 도안 배포

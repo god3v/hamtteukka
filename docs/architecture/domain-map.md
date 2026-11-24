@@ -49,7 +49,7 @@ flowchart LR
 
 | 컨텍스트 | 릴리스 | 기능 ID | 이슈 라벨 | 스펙 폴더 |
 |---|---|---|---|---|
-| 계정 | R0, 네이버 R1+, Apple A1 | F-ACCT-01, F-ACCT-04, F-ACCT-05 (R0), F-ACCT-02 (R1+), F-ACCT-03 (A1) | area:account | [001-account](../specs/001-account/requirements.md) |
+| 계정 | R0, Apple A1 | F-ACCT-01, F-ACCT-02, F-ACCT-04, F-ACCT-05 (R0), F-ACCT-03 (A1) | area:account | [001-account](../specs/001-account/requirements.md) |
 | 기록 도구 | R1, 보강 R1+ | F-PROJ-01, F-PROJ-02, F-TOOL-01, F-COUNTER-01~04 (R1), F-PROJ-03, F-PROJ-04, F-COUNTER-05, F-STASH-01, F-TOOL-02 (R1+) | area:project, area:counter | [002-projects](../specs/002-projects/requirements.md), [003-row-counter](../specs/003-row-counter/requirements.md) |
 | 도안 파일 | R1, 보강 R1+ | F-VIEWER-01 (R1), F-VIEWER-02~04 (R1+) | area:pattern-file | [004-pattern-files](../specs/004-pattern-files/requirements.md) |
 | 도안 스토어 | R2, 확장 R3 | F-STORE-01~08, F-SELL-01 (R2), F-STORE-09~12 (R3) | area:pattern-store | 아직 없음 |

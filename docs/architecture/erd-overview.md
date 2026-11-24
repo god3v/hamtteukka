@@ -36,7 +36,7 @@ erDiagram
   auth_identities {
     uuid id PK
     uuid member_id FK
-    text provider "kakao, google"
+    text provider "kakao, naver, google"
     text provider_user_id "provider와 함께 UNIQUE"
   }
   terms_versions {
@@ -92,7 +92,7 @@ members를 중심으로 계정(001), 프로젝트(002), 카운터(003), 도안 �
 | 테이블 | 스펙 | 개념 모델에서 알아 둘 점 |
 |---|---|---|
 | members | 001 | id는 Supabase `auth.users.id`와 같은 값이어서 RLS가 `auth.uid()`로 회원을 찾는다. 이메일은 선택 값이다. 연령 확인 시각도 이 테이블에 둔다 |
-| auth_identities | 001 | 회원은 (provider, provider_user_id)로 식별한다. 네이버(R1+)와 Apple(A1)도 같은 테이블에 추가한다 |
+| auth_identities | 001 | 회원은 (provider, provider_user_id)로 식별한다. R0의 provider는 kakao, naver, google이고, Apple(A1)도 같은 테이블에 추가한다 |
 | terms_versions | 001 | 약관과 처리방침을 버전별로 보관한다 |
 | terms_acceptances | 001 | 회원이 동의한 약관 버전, 동의 여부, 시각을 첫 가입자부터 남기고 추가만 한다 |
 | account_deletions | 001 | 탈퇴 처리 상태(requested, scheduled, purged)와 상태별 시각. 삭제를 마치면 회원 ID를 비운다 |

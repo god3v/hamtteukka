@@ -4,7 +4,7 @@ status: approved
 updated: 2026-11-24
 feature: 001-account
 release: R0
-features: [F-ACCT-01, F-ACCT-04, F-ACCT-05]
+features: [F-ACCT-01, F-ACCT-02, F-ACCT-04, F-ACCT-05]
 ---
 
 # 계정: 가입·로그인·약관 동의·탈퇴 요구사항
@@ -13,7 +13,7 @@ features: [F-ACCT-01, F-ACCT-04, F-ACCT-05]
 
 ## 상태와 승인
 
-이 문서는 2026-11-19에 Feature 이슈 `[001] 계정: 가입·로그인·약관 동의·탈퇴`의 '요구사항 검토' Task에서 승인되었고, 2026-11-20에 리뷰에서 나온 Q-12~Q-18을 반영해 다시 승인되었다. 2026-11-24에 설계 단계에서 나온 Q-19를 반영해 다시 승인된 기준 문서다. `/sdd-design` 단계의 설계와 이후의 작업 분해, 테스트는 이 문서를 기준으로 삼는다.
+이 문서는 2026-11-19에 Feature 이슈 `[001] 계정: 가입·로그인·약관 동의·탈퇴`의 '요구사항 검토' Task에서 승인되었고, 2026-11-20에 리뷰에서 나온 Q-12~Q-18을 반영해 다시 승인되었다. 2026-11-24에 설계 단계에서 나온 Q-19를 반영해 다시 승인되었다. 같은 날 네이버 로그인을 R0에 넣는 Q-20을 반영해 다시 승인된 기준 문서다. 설계와 이후의 작업 분해, 테스트는 이 문서를 기준으로 삼는다.
 
 [확인 질문](#확인-질문)은 모두 해결했고, 결정 내용은 [해결 기록](#해결-기록)에 있다. 요구사항을 바꿔야 하면 설계나 이슈보다 이 문서를 먼저 고치고, `status`를 `review`로 되돌려 다시 승인을 받는다.
 
@@ -21,7 +21,7 @@ features: [F-ACCT-01, F-ACCT-04, F-ACCT-05]
 |---|---|
 | 상태 | 승인 (`approved`) |
 | 출시 단계 | R0 기반 |
-| 기능 ID | F-ACCT-01, F-ACCT-04, F-ACCT-05 |
+| 기능 ID | F-ACCT-01, F-ACCT-02, F-ACCT-04, F-ACCT-05 |
 | Feature 이슈 | [#8](https://github.com/god3v/hamtteukka/issues/8) `[001] 계정: 가입·로그인·약관 동의·탈퇴` |
 | 승인 위치 | Feature 이슈의 '요구사항 검토' Task ([#9](https://github.com/god3v/hamtteukka/issues/9) `[001] 요구사항 검토와 확인 질문 해결`) |
 | 선행 명세 | 없음 |
@@ -33,7 +33,7 @@ features: [F-ACCT-01, F-ACCT-04, F-ACCT-05]
 
 함뜨까의 R1 MVP는 프로젝트 기록, 단수 카운터, 게이지, 내 도안 파일 같은 개인 뜨개 도구로 구성된다([ADR-0008](../../decisions/0008-mvp-personal-tools.md)). 퀵 카운터를 뺀 나머지 도구는 기록을 서버에 저장하므로 회원 계정이 먼저 있어야 한다. 그래서 R0에서 가입, 로그인, 탈퇴를 먼저 만들고, 운영 도메인에서 세 흐름이 동작하는 것을 R0 완료 조건으로 삼는다.
 
-인증은 Supabase Auth가 맡고, 첫 로그인 수단은 카카오와 구글로 정했다([ADR-0005](../../decisions/0005-auth-supabase-social-login.md)). 회원은 이메일이 아니라 로그인 제공자와 제공자가 발급한 사용자 ID의 조합으로 식별한다. 동의 기록은 나중에 소급해서 만들 수 없으므로 첫 가입자부터 남기며, 판매 기능이 열린 뒤에도 증빙 자료로 쓴다([ADR-0007](../../decisions/0007-sales-ready-data-model.md)).
+인증은 Supabase Auth가 맡고, 첫 로그인 수단은 카카오, 네이버, 구글로 정했다([ADR-0015](../../decisions/0015-auth-providers-with-naver.md)). 회원은 이메일이 아니라 로그인 제공자와 제공자가 발급한 사용자 ID의 조합으로 식별한다. 동의 기록은 나중에 소급해서 만들 수 없으므로 첫 가입자부터 남기며, 판매 기능이 열린 뒤에도 증빙 자료로 쓴다([ADR-0007](../../decisions/0007-sales-ready-data-model.md)).
 
 이 요구사항이 근거로 삼은 조사 내용은 다음과 같다. 모든 출처는 2026-11-18에 조사한 기준이다.
 
@@ -57,6 +57,7 @@ features: [F-ACCT-01, F-ACCT-04, F-ACCT-05]
 설계 단계인 2026-11-24에 아래 사실을 추가로 확인했다.
 
 - Supabase Auth는 제공자가 확인한 이메일이 같으면 다른 제공자의 로그인을 기존 사용자에 자동으로 연결하며, 이 동작을 끄는 설정은 문서에 없다([Supabase 계정 연결 문서](https://supabase.com/docs/guides/auth/auth-identity-linking)). 카카오 앱을 비즈 앱으로 전환하지 않으면 카카오가 이메일을 주지 않으므로, 카카오와 구글 사이에서는 이 연결이 생기지 않는다.
+- Supabase는 네이버를 기본 제공하지 않지만, 커스텀 OAuth 제공자로 연결할 수 있다. 네이버의 사용자 정보 응답은 Supabase가 기대하는 형식과 달라서 변환 경로가 필요하다. 자세한 내용은 [네이버 로그인 연결 확인](../../research/2026-11-24-naver-login-supabase.md)에 있다.
 
 ## 사용자 흐름
 
@@ -66,8 +67,10 @@ features: [F-ACCT-01, F-ACCT-04, F-ACCT-05]
 flowchart TD
     login["로그인 화면"] --> pick{"로그인 수단 선택"}
     pick -->|"카카오"| kakao["카카오 인증"]
+    pick -->|"네이버"| naver["네이버 인증"]
     pick -->|"구글"| google["구글 인증"]
     kakao --> verify["인증 결과 확인"]
+    naver --> verify
     google --> verify
     verify -->|"취소 또는 실패"| login
     verify -->|"성공"| member{"가입한 회원인가"}
@@ -81,7 +84,7 @@ flowchart TD
     create --> back
 ```
 
-카카오 인증과 구글 인증은 같은 확인 단계로 합류한다. 처음 로그인한 사용자는 연령 확인과 필수 약관 동의를 마쳐야 회원이 된다. 만 14세 미만은 가입할 수 없으며, 동의를 마치지 않은 로그인 정보는 FR-27에 따라 삭제한다.
+카카오, 네이버, 구글 인증은 같은 확인 단계로 합류한다. 처음 로그인한 사용자는 연령 확인과 필수 약관 동의를 마쳐야 회원이 된다. 만 14세 미만은 가입할 수 없으며, 동의를 마치지 않은 로그인 정보는 FR-27에 따라 삭제한다.
 
 ### 로그아웃과 탈퇴
 
@@ -109,7 +112,7 @@ flowchart TD
 
 | ID | 사용자 | 원하는 일 | 이유 | 기능 ID |
 |---|---|---|---|---|
-| US-01 | 처음 방문한 사용자 | 카카오나 구글 계정으로 가입하고 싶다 | 새 비밀번호를 만들지 않고 바로 기록을 시작하려고 | F-ACCT-01 |
+| US-01 | 처음 방문한 사용자 | 카카오, 네이버, 구글 가운데 쓰던 계정으로 가입하고 싶다 | 새 비밀번호를 만들지 않고 바로 기록을 시작하려고 | F-ACCT-01, F-ACCT-02 |
 | US-02 | 회원 | 가입할 때 쓴 계정으로 다시 로그인하고 싶다 | 내 기록을 이어서 보려고 | F-ACCT-01 |
 | US-03 | 가입하는 사용자 | 어떤 약관에 동의하는지 확인한 뒤 항목별로 동의하고 싶다 | 무엇에 동의하는지 알고 가입하려고 | F-ACCT-05 |
 | US-05 | 회원 | 다른 사람과 함께 쓰는 기기에서 로그아웃하고 싶다 | 그 기기를 쓰는 다른 사람이 내 계정을 쓰지 못하게 하려고 | F-ACCT-01 |
@@ -125,7 +128,7 @@ flowchart TD
 
 | ID | 요구사항 | 관련 US |
 |---|---|---|
-| FR-01 | 로그인 화면은 카카오와 구글 로그인 버튼을 제공한다. 가입과 로그인은 같은 버튼에서 시작한다. | US-01, US-02 |
+| FR-01 | 로그인 화면은 카카오, 네이버, 구글 로그인 버튼을 제공한다. 가입과 로그인은 같은 버튼에서 시작한다. | US-01, US-02 |
 | FR-02 | 시스템은 회원을 로그인 제공자와 제공자 사용자 ID의 조합으로 식별한다. 이메일은 식별 키로 쓰지 않는다. | US-01, US-02 |
 | FR-03 | 이메일은 선택 정보로 저장한다. 제공자가 이메일을 주지 않아도 가입과 로그인을 끝까지 진행할 수 있다. | US-01 |
 | FR-04 | 로그인 제공자가 다르면 이메일이 같아도 같은 회원으로 합치지 않는다. 회원은 가입할 때 쓴 로그인 수단으로만 로그인한다. 인증 서비스가 같은 이메일을 이유로 다른 제공자의 로그인을 기존 회원에 연결하면, 시스템은 그 로그인의 세션을 끝내고 가입할 때 쓴 로그인 수단으로 로그인하라고 안내한다. | US-02 |
@@ -191,8 +194,8 @@ flowchart TD
 | NFR-03 | 무결성 | 동의 기록에는 새 기록 추가만 허용한다. 탈퇴 삭제 절차가 아니면 기존 기록을 고치거나 지우지 않는다. | [ADR-0007](../../decisions/0007-sales-ready-data-model.md) |
 | NFR-04 | 구조 | 인증과 회원 데이터에 접근하는 코드는 `packages/shared`에만 둔다. `apps/web`은 shared 함수만 호출한다. | [ADR-0003](../../decisions/0003-data-access-boundary.md) |
 | NFR-05 | 데이터 위치 | 회원 데이터는 서울 리전(ap-northeast-2)의 Supabase 프로젝트에 저장한다. | [ADR-0002](../../decisions/0002-stack-nextjs-supabase-vercel.md) |
-| NFR-06 | 확장성 | 회원과 로그인 수단을 따로 저장한다. 네이버(R1+)와 Apple(A1)을 추가할 때 회원 구조를 바꾸지 않기 위해서다. | [ADR-0005](../../decisions/0005-auth-supabase-social-login.md) |
-| NFR-07 | 이식성 | Supabase Auth는 비대칭 서명 키로 JWT를 발급한다. R4에 추가할 Spring 서버가 JWKS로 같은 토큰을 검증할 수 있어야 한다. | [ADR-0005](../../decisions/0005-auth-supabase-social-login.md) |
+| NFR-06 | 확장성 | 회원과 로그인 수단을 따로 저장한다. Apple(A1)처럼 로그인 수단을 더할 때 회원 구조를 바꾸지 않기 위해서다. | [ADR-0015](../../decisions/0015-auth-providers-with-naver.md) |
+| NFR-07 | 이식성 | Supabase Auth는 비대칭 서명 키로 JWT를 발급한다. R4에 추가할 Spring 서버가 JWKS로 같은 토큰을 검증할 수 있어야 한다. | [ADR-0015](../../decisions/0015-auth-providers-with-naver.md) |
 | NFR-08 | 사용성 | 로그인, 동의, 설정, 탈퇴 화면은 휴대폰 브라우저에서 가로 스크롤 없이 쓸 수 있다. | F-UX-01 |
 
 ## 수용 기준
@@ -455,14 +458,21 @@ flowchart TD
 - **When** 구글로 로그인한다.
 - **Then** 로그인 일시, IP 주소, 로그인 수단이 담긴 로그인 기록이 하나 추가된다.
 
+### AC-35 네이버로 처음 가입한다
+
+관련 항목: FR-01, FR-02, FR-03
+
+- **Given** 가입한 적이 없는 사용자가 로그인 화면을 열었고, 네이버 인증 화면에서 이메일 제공에 동의하지 않는다.
+- **When** 네이버 인증을 마치고, 만 14세 이상임을 확인하고, 필수 약관 두 개에 동의한다.
+- **Then** 네이버 제공자 ID로 식별되고 이메일이 빈 회원이 생성되며, 가입이 오류 없이 끝난다.
+
 ## 범위 밖
 
 | 항목 | 다루는 시점 | 이유 |
 |---|---|---|
-| 네이버 로그인 | R1+ (F-ACCT-02) | Supabase Auth가 네이버를 기본 제공하지 않아 Custom OAuth Provider로 연결해야 한다([Supabase 문서](https://supabase.com/docs/guides/auth/custom-oauth-providers)). |
 | Sign in with Apple과 Apple 계정 변경 알림 | A1 (F-ACCT-03) | Apple 가이드라인 4.8은 소셜 로그인을 쓰는 iOS 앱에 적용되므로, 웹만 운영하는 동안에는 필요하지 않다([Apple 가이드라인](https://developer.apple.com/app-store/review/guidelines/)). |
 | 로그인 없이 여는 계정 삭제 요청 페이지 | A1 준비 항목 | Google Play는 Play Console에 등록할 웹 삭제 요청 링크를 요구한다([Google Play 정책](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)). A1에서 이 페이지를 만들 때 R0 탈퇴와 같은 삭제 상태를 쓴다. |
-| 이메일·비밀번호 가입 | 정하지 않음 | 첫 로그인 수단은 카카오와 구글로 정했다([ADR-0005](../../decisions/0005-auth-supabase-social-login.md)). |
+| 이메일·비밀번호 가입 | 정하지 않음 | 첫 로그인 수단은 카카오, 네이버, 구글로 정했다([ADR-0015](../../decisions/0015-auth-providers-with-naver.md)). |
 | 광고성 정보 수신 동의와 발송 | R2 (F-NOTI-02와 함께) | 광고를 보낼 수 있게 되는 R2에서 채널별 수신 동의, 동의 변경, 2년마다 수신 동의 확인을 함께 만든다. 정보통신망법 시행령 제62조의3은 수신 동의를 받은 날부터 2년마다 동의 여부를 확인하게 한다([국가법령정보센터](https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률시행령/제62조의3)). 이 항목은 처음 초안의 US-04, FR-12, FR-13, AC-04, AC-05였다. |
 | 일정 기간이나 비활동 뒤 로그인 상태 만료 | 정하지 않음 | Supabase Auth에서 이 설정은 Pro 요금제 이상에서만 쓸 수 있다([Supabase 세션 문서](https://supabase.com/docs/guides/auth/sessions)). |
 | 관리자 화면에서 약관 버전 등록 | R2 (F-ADMIN-01) | 관리자 콘솔은 R2에 들어간다. R0에서 버전을 등록하는 방법은 설계 단계에서 정한다. |
@@ -476,7 +486,7 @@ flowchart TD
 
 | 결정 | 이 기능에 주는 제약 |
 |---|---|
-| [ADR-0005](../../decisions/0005-auth-supabase-social-login.md) Supabase Auth와 카카오·구글 로그인 | 인증은 Supabase Auth가 맡는다. 회원은 (provider, provider_user_id)로 식별하고, 이메일은 선택 정보로 다룬다. |
+| [ADR-0015](../../decisions/0015-auth-providers-with-naver.md) Supabase Auth와 카카오·구글·네이버 로그인 | 인증은 Supabase Auth가 맡는다. 네이버는 커스텀 OAuth 제공자와 사용자 정보 변환 경로로 연결한다. 회원은 (provider, provider_user_id)로 식별하고, 이메일은 선택 정보로 다룬다. |
 | [ADR-0004](../../decisions/0004-rls-authorization.md) RLS를 1차 권한 검사로 사용 | 회원 정보와 동의 기록에 접근할 권한은 RLS 정책으로 검사하고, 정책은 `design/erd.md`의 정책 표에 기록한다. |
 | [ADR-0003](../../decisions/0003-data-access-boundary.md) Supabase 접근을 packages/shared로 제한 | 인증 호출과 회원 데이터 접근은 shared 함수로 감싸고, Supabase 타입을 앱에 노출하지 않는다. |
 | [ADR-0006](../../decisions/0006-migration-ownership.md) DB 마이그레이션 소유권을 스키마별로 분리 | 회원과 동의 관련 테이블은 `public` 스키마에 두고 `supabase/migrations`의 SQL로 관리한다. |
@@ -488,6 +498,7 @@ flowchart TD
 - 처리방침에는 개인정보 보호법 제30조가 정한 항목을 담는다. Vercel과 Supabase 사용이 국외 이전에 해당하는지와 기재 범위는 법률 검토로 확정한다([개인정보보호위원회](https://pipc.go.kr/np/default/page.do?mCode=D060040000)).
 - 약관 변경을 회원마다 알리는 방법(FR-32)이 공정거래위원회가 요구하는 개별 통지로 충분한지는 공개 출시 전에 약관을 확정할 때 법률 검토로 확인한다. 이메일이 없고 시행 전에 접속하지 않은 회원에게는 시행 전에 개별 통지를 보낼 수 없다는 점을 함께 검토한다.
 - 카카오 앱을 비즈 앱으로 전환하지 않는 동안에는 Supabase의 'Allow users without an email' 옵션을 켜 둔다([Supabase 카카오 로그인 문서](https://supabase.com/docs/guides/auth/social-login/auth-kakao)).
+- 네이버 커스텀 제공자는 `email_optional`을 켜 두어, 네이버가 이메일을 주지 않아도 가입할 수 있게 한다([Supabase 커스텀 제공자 문서](https://supabase.com/docs/guides/auth/custom-oauth-providers)).
 
 ## 확인 질문
 
@@ -514,6 +525,7 @@ flowchart TD
 | Q-17 | 약관 변경 공지를 시작한 뒤 가입해 시행 30일 전 발송 기한이 지난 회원에게는 이메일을 언제 보낼까? | 가입을 마친 때 보내기, 보내지 않고 안내 창만 보여 주기 | FR-32 | 해결 |
 | Q-18 | 약관 변경의 시행일 뒤에 가입한 회원에게도 그 변경의 이메일과 안내 창을 보낼까? | 보내지 않기, 보내기 | FR-10, FR-32 | 해결 |
 | Q-19 | 인증 서비스가 같은 이메일을 이유로 다른 제공자의 로그인을 기존 회원에 자동으로 연결하면 어떻게 할까? | 가입한 수단으로 안내, 한 회원으로 합치기 | FR-04, AC-07 | 해결 |
+| Q-20 | 네이버 로그인을 R1+가 아니라 R0에 넣을까? | R0에 추가, 계획대로 R1+ | FR-01, AC-35 | 해결 |
 
 ### 해결 기록
 
@@ -540,11 +552,12 @@ flowchart TD
 | 2026-11-20 | Q-17 | 공지를 시작할 때 가입해 있던 회원에게는 시행 30일 전까지, 공지를 시작한 뒤 가입한 회원에게는 가입을 마친 때 이메일을 보낸다. 같은 리뷰에서 AC-33에 FR-28의 재동의가 남은 경우를 더하고, 개별 통지 방법의 법률 검토를 제약 조건에 적었다. | FR-32, AC-33, AC-34, 제약 조건 |
 | 2026-11-20 | Q-18 | 가입 때 이메일을 보내는 대상은 공지를 시작한 뒤 시행일 전까지 가입한 회원으로 한정한다. 시행일 뒤에 가입한 회원은 가입할 때 시행 중인 버전에 동의하므로, 그 버전의 변경 이메일과 안내 창을 보내지 않는다. | FR-32, AC-34 |
 | 2026-11-24 | Q-19 | Supabase Auth의 자동 연결은 끌 수 없으므로, 가입할 때 쓴 로그인 수단이 아닌 수단으로 들어오면 세션을 끝내고 가입한 로그인 수단을 안내한다. 같은 이메일이어도 가입 수단별로 계정을 나누고 가입한 수단을 안내하는 국내 서비스 방식에 맞췄고, Q-09에서 수단 연결 기능을 미룬 결정을 유지한다. | 배경, FR-04, AC-07 |
+| 2026-11-24 | Q-20 | 네이버 로그인을 R0에 넣고, Supabase 커스텀 OAuth 제공자와 웹 앱의 사용자 정보 변환 경로로 연결한다. 회원은 가입한 수단으로만 로그인하므로(Q-19), 첫 출시부터 네이버를 제공해야 네이버를 쓰는 사용자가 다른 수단으로 가입하지 않는다. 이 결정으로 ADR-0005를 ADR-0015로 대체했다. | 배경, 사용자 흐름도, US-01, FR-01, NFR-06, AC-35, 범위 밖 표, 제약 조건 |
 
 ## 관련 문서
 
 - [결정 목록](../../decisions/README.md): 확정된 ADR과 미결정 항목 OD-01, OD-02를 관리한다.
-- [ADR-0005 Supabase Auth와 카카오·구글 로그인](../../decisions/0005-auth-supabase-social-login.md)
+- [ADR-0015 Supabase Auth와 카카오·구글·네이버 로그인](../../decisions/0015-auth-providers-with-naver.md): ADR-0005를 대체한 인증 결정
 - [ADR-0004 RLS를 1차 권한 검사로 사용](../../decisions/0004-rls-authorization.md)
 - [ADR-0007 판매에 대비한 데이터 원칙](../../decisions/0007-sales-ready-data-model.md)
 - [기능 목록](../../product/feature-catalog.md): F-ACCT-01부터 F-ACCT-05까지의 설명과 출시 단계를 담고 있다.

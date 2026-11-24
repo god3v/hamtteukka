@@ -1,7 +1,7 @@
 ---
 doc_type: explanation
 status: active
-updated: 2026-11-18
+updated: 2026-11-24
 ---
 
 # 시스템 구성
@@ -31,7 +31,7 @@ flowchart LR
   subgraph oauth["외부 OAuth"]
     kakao["카카오"]
     google["구글"]
-    naver["네이버 (R1+)"]
+    naver["네이버"]
     apple["Apple (A1)"]
   end
 
@@ -47,7 +47,7 @@ flowchart LR
   web -->|"Server Action이 shared 함수 호출"| db
   auth -->|"OAuth"| kakao
   auth -->|"OAuth"| google
-  auth -.->|"Custom OAuth"| naver
+  auth -->|"Custom OAuth"| naver
   auth -.->|"Sign in with Apple"| apple
   jobs -->|"DB 안에서 실행"| db
   expo -.->|"packages/shared 함수로 조회·저장"| db
@@ -58,7 +58,7 @@ flowchart LR
   api -.->|"결제 승인, 웹훅, 지급 요청"| pgco
 
   classDef planned stroke-dasharray: 5 5
-  class expo,naver,apple,api,pgco planned
+  class expo,apple,api,pgco planned
 ```
 
 실선은 R0~R1에서 쓰는 연결이다. 점선 화살표와 점선 테두리는 괄호에 적은 릴리스에서 추가할 연결과 구성 요소다. 화살표는 요청을 보내는 쪽에서 받는 쪽으로 향한다.
@@ -72,7 +72,7 @@ R0~R1에서 요청은 다음 네 경로로 처리된다. Supabase에 접근하�
 | 화면과 Server Action | 브라우저가 apps/web에 요청하고, Server Action이 packages/shared 함수를 호출한다 | RLS |
 | 브라우저의 직접 접근 | 브라우저에서 실행되는 packages/shared 함수가 Supabase에 직접 요청한다 | RLS |
 | 파일 다운로드 | 브라우저가 signed URL로 Storage의 private 버킷에서 파일을 받는다 | Storage 접근 정책 |
-| 로그인 | 브라우저가 Supabase Auth로 로그인을 시작하고, Auth가 카카오·구글과 OAuth를 진행한다 | Supabase Auth |
+| 로그인 | 브라우저가 Supabase Auth로 로그인을 시작하고, Auth가 카카오·네이버·구글과 OAuth를 진행한다 | Supabase Auth |
 
 브라우저도 Supabase에 직접 요청하므로, 권한은 화면 코드가 아니라 RLS로 검사한다([ADR-0004](../decisions/0004-rls-authorization.md)). 파일 본문은 Vercel 함수로 중계하지 않는 것을 기본으로 한다. Vercel 서울 리전의 Fast Data Transfer 단가가 GB당 $0.35로 높기 때문이다([Vercel icn1 요금](https://vercel.com/docs/pricing/regional-pricing/icn1)). signed URL을 발급하는 구체적인 흐름은 004 설계에서 정한다.
 
@@ -94,7 +94,7 @@ Supabase 프로젝트는 서울 리전 ap-northeast-2에 만든다. 일반 APAC 
 
 | 서비스 | 쓰임 | 결정 문서 |
 |---|---|---|
-| Auth | 신원 제공자. 카카오·구글 로그인과 세션 발급 | [ADR-0005](../decisions/0005-auth-supabase-social-login.md) |
+| Auth | 신원 제공자. 카카오·네이버·구글 로그인과 세션 발급 | [ADR-0015](../decisions/0015-auth-providers-with-naver.md) |
 | Postgres + RLS | 서비스 데이터 저장. RLS를 1차 권한 검사로 사용 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md), [ADR-0004](../decisions/0004-rls-authorization.md) |
 | Storage | 개인 PDF를 private 버킷에 보관하고 signed URL로 제공 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md) |
 | Cron·Queues | pg_cron 기반 예약 작업과 pgmq 기반 큐 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md) |
@@ -106,11 +106,11 @@ Supabase 프로젝트는 서울 리전 ap-northeast-2에 만든다. 일반 APAC 
 
 ### 외부 OAuth
 
-카카오와 구글 로그인은 R0에서 연결한다. 네이버는 Supabase가 기본 제공하지 않으므로 R1+에서 Custom OAuth Provider로 연결한다. Custom Provider는 Free 플랜에서 3개까지, Pro 이상에서 제한 없이 쓸 수 있다([Supabase Custom OAuth 문서](https://supabase.com/docs/guides/auth/custom-oauth-providers)). 네이버의 비표준 userinfo 응답을 이 방식으로 처리할 수 있는지는 R1+ 작업에서 검증한다. Apple 로그인은 A1에서 추가한다. 로그인 제공자 구성은 모두 [ADR-0005](../decisions/0005-auth-supabase-social-login.md)가 정했다.
+카카오, 네이버, 구글 로그인은 R0에서 연결한다. 네이버는 Supabase가 기본 제공하지 않으므로 커스텀 OAuth 제공자로 연결하고, 사용자 정보 주소에는 네이버 응답을 Supabase가 읽는 형식으로 바꾸는 apps/web의 경로를 등록한다. 커스텀 제공자는 Free 플랜에서 3개까지, Pro 이상에서 제한 없이 쓸 수 있다([Supabase Custom OAuth 문서](https://supabase.com/docs/guides/auth/custom-oauth-providers)). Apple 로그인은 A1에서 추가한다. 로그인 제공자 구성은 [ADR-0015](../decisions/0015-auth-providers-with-naver.md)가 정했다.
 
 ### R4에 추가할 구성 요소
 
-apps/api는 Kotlin과 Spring Boot로 만드는 서버이며 Gradle로 빌드한다. R4 유료 판매에서 추가하고, 그 전에는 뼈대도 만들지 않는다([ADR-0001](../decisions/0001-monorepo-structure.md)). apps/api는 Supabase가 발급한 JWT를 JWKS로 받은 비대칭 서명 공개 키로 검증한다([ADR-0005](../decisions/0005-auth-supabase-social-login.md)). 주문·결제·원장·지급 테이블이 있는 commerce 스키마는 apps/api의 Flyway가 소유한다([ADR-0006](../decisions/0006-migration-ownership.md)).
+apps/api는 Kotlin과 Spring Boot로 만드는 서버이며 Gradle로 빌드한다. R4 유료 판매에서 추가하고, 그 전에는 뼈대도 만들지 않는다([ADR-0001](../decisions/0001-monorepo-structure.md)). apps/api는 Supabase가 발급한 JWT를 JWKS로 받은 비대칭 서명 공개 키로 검증한다([ADR-0015](../decisions/0015-auth-providers-with-naver.md)). 주문·결제·원장·지급 테이블이 있는 commerce 스키마는 apps/api의 Flyway가 소유한다([ADR-0006](../decisions/0006-migration-ownership.md)).
 
 PG·지급대행도 R4에서 연결한다. 구매자가 낸 돈을 운영자 계좌로 받은 뒤 작가에게 보내는 흐름은 만들지 않는다. 이 흐름은 전자금융거래법상 등록이 필요한 PG 업무에 해당하고, 미등록 영업은 형사 처벌 대상이기 때문이다([금융위원회 자료](https://www.fsc.go.kr/no010102/82523)). 작가 지급은 PG 지급대행이나 PortOne 파트너 정산과 지급대행 PG로만 처리한다([ADR-0009](../decisions/0009-payout-via-pg.md)). 거래 구조(OD-12)와 PG 선택(OD-14)은 R4 착수 전에 정한다.
 
@@ -121,11 +121,11 @@ PG·지급대행도 R4에서 연결한다. 구매자가 낸 돈을 운영자 계
 | GitHub Issues·Projects | 업무 관리 | R0 | [ADR-0011](../decisions/0011-github-issues-projects.md) |
 | GitHub Actions | CI (typecheck, lint, test) | R0 | [배포 구조](deployment.md), 세부 구성은 R0에서 확정 |
 | Vercel | apps/web 호스팅, 함수 리전 icn1 | R0 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md) |
-| Supabase | Auth, Postgres, RLS, Storage, Cron, Queues | R0 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md), [ADR-0004](../decisions/0004-rls-authorization.md), [ADR-0005](../decisions/0005-auth-supabase-social-login.md) |
-| 카카오 로그인 | 소셜 로그인 | R0 | [ADR-0005](../decisions/0005-auth-supabase-social-login.md) |
-| 구글 로그인 | 소셜 로그인 | R0 | [ADR-0005](../decisions/0005-auth-supabase-social-login.md) |
-| 네이버 로그인 | 소셜 로그인 (Custom OAuth) | R1+ | [ADR-0005](../decisions/0005-auth-supabase-social-login.md) |
-| 트랜잭션 이메일 발송 서비스 | 도안 업데이트 알림 등 (F-NOTI-02) | R2 | 미정, R2 설계에서 정한다 |
+| Supabase | Auth, Postgres, RLS, Storage, Cron, Queues | R0 | [ADR-0002](../decisions/0002-stack-nextjs-supabase-vercel.md), [ADR-0004](../decisions/0004-rls-authorization.md), [ADR-0015](../decisions/0015-auth-providers-with-naver.md) |
+| 카카오 로그인 | 소셜 로그인 | R0 | [ADR-0015](../decisions/0015-auth-providers-with-naver.md) |
+| 네이버 로그인 | 소셜 로그인 (커스텀 OAuth) | R0 | [ADR-0015](../decisions/0015-auth-providers-with-naver.md) |
+| 구글 로그인 | 소셜 로그인 | R0 | [ADR-0015](../decisions/0015-auth-providers-with-naver.md) |
+| 트랜잭션 이메일 발송 서비스 | 약관 변경 안내와 유출 통지(001), 도안 업데이트 알림 등(F-NOTI-02) | R0 | 미정, [OD-21](../decisions/README.md)에서 정한다 |
 | Meilisearch | 한국어 검색 (조건부 후보) | R2 | OD-08 결과에 따라 정한다 |
 | PG·지급대행 | 결제, 환불, 작가 지급 | R4 | [ADR-0009](../decisions/0009-payout-via-pg.md), OD-14 |
 | Spring 서버 호스팅 | apps/api 실행 | R4 | 미정, 비용 계획의 예시는 Lightsail 서울 |
