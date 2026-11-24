@@ -30,7 +30,7 @@
 | `pnpm db:start`, `pnpm db:stop` | Supabase 로컬 스택 시작과 종료 (Docker 필요) |
 | `pnpm db:status` | 로컬 스택의 주소와 키 출력 |
 | `pnpm db:reset` | 로컬 DB를 비우고 `supabase/migrations`를 처음부터 다시 적용 |
-| `pnpm db:test` | 실행 중인 로컬 스택에서 `supabase/tests/database/`의 pgTAP 테스트(RLS 정책과 DB 함수) 실행 |
+| `pnpm db:test` | 실행 중인 로컬 스택에서 `supabase/tests/database/`의 pgTAP 테스트(RLS 정책과 DB 함수) 실행. 새 마이그레이션은 자동으로 적용되지 않으므로 먼저 `pnpm db:reset`을 실행한다 |
 | `node scripts/check-docs.mjs` | `docs/` 문서의 frontmatter, 제목, 리드, Mermaid 유형 검사 |
 
 특정 패키지만 실행하려면 `pnpm --filter @hamtteukka/shared test`처럼 `--filter`를 붙인다.
@@ -93,7 +93,7 @@ scripts/           저장소 검사 스크립트
 
 ## 검증과 완료 보고
 
-- 완료를 보고할 때는 `pnpm typecheck`, `pnpm lint`, `pnpm test`의 실제 출력과 종료 코드를 근거로 삼는다. 마이그레이션이나 `supabase/tests`를 바꿨으면 `pnpm db:test`의 출력도 근거로 삼는다. 실행하지 않은 검사를 통과했다고 보고하지 않는다.
+- 완료를 보고할 때는 `pnpm typecheck`, `pnpm lint`, `pnpm test`의 실제 출력과 종료 코드를 근거로 삼는다. 마이그레이션이나 `supabase/tests`를 바꿨으면 `pnpm db:reset`으로 마이그레이션을 처음부터 다시 적용한 뒤 실행한 `pnpm db:test`의 출력도 근거로 삼는다. 실행하지 않은 검사를 통과했다고 보고하지 않는다.
 - 검사 출력을 `head`, `tail`, `grep`으로 파이프하지 않는다. 파이프를 거치면 실패 종료 코드가 가려진다. 출력이 길면 파일로 저장하고 종료 코드를 함께 확인한다 (헌법 P-09).
 - 수용 기준을 확인하는 테스트는 이름 앞에 기능 번호와 AC ID를 붙인다. 예: `test("003/AC-04 리셋하기 전에 확인을 받는다", ...)`
 - 검사가 실패한 상태로 작업을 마쳐야 하면, 실패한 출력을 그대로 보고하고 남은 일을 적는다.
