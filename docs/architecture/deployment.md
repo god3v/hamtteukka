@@ -58,7 +58,7 @@ flowchart LR
 
 Vercel 함수의 기본 리전은 iad1이므로 production 함수 리전을 icn1로 명시해야 한다([Vercel icn1 문서](https://vercel.com/docs/pricing/regional-pricing/icn1)). Supabase Free 플랜은 활성 프로젝트를 2개까지 허용한다([Supabase 요금](https://supabase.com/pricing)). 따라서 preview 전용 Supabase 프로젝트를 둘지는 이 한도를 함께 고려해 정한다.
 
-운영 Supabase 프로젝트는 JWT를 비대칭 서명 키로 발급한다. 2026-11-24에 대시보드의 JWT Keys 화면에서 현재 키가 비대칭 키인지 확인했다. R4에 추가할 Spring 서버는 프로젝트의 JWKS 주소(`/auth/v1/.well-known/jwks.json`)에서 공개 키를 받아 같은 토큰을 검증한다([ADR-0015](../decisions/0015-auth-providers-with-naver.md), [001 요구사항](../specs/001-account/requirements.md) NFR-07).
+운영 Supabase 프로젝트는 JWT를 비대칭 서명 키로 발급한다. 2026-11-24에 대시보드의 JWT Keys 화면에서 현재 키가 비대칭 키인지 확인했고, 같은 날 JWKS 주소가 `EC` 유형(`alg`: `ES256`)의 공개 키를 주는 것도 확인했다. R4에 추가할 Spring 서버는 프로젝트의 JWKS 주소(`/auth/v1/.well-known/jwks.json`)에서 공개 키를 받아 같은 토큰을 검증한다([ADR-0015](../decisions/0015-auth-providers-with-naver.md), [001 요구사항](../specs/001-account/requirements.md) NFR-07).
 
 ## Vercel 프로젝트 설정
 
