@@ -6,6 +6,7 @@ import { getAppInfo } from "@hamtteukka/shared";
 import { THEME_COLORS, themeInitScript } from "@/lib/theme";
 
 import { BottomTabs } from "./_components/bottom-tabs";
+import { ContinueBar } from "./_components/continue-bar";
 import { HistoryTracker } from "./_components/history-tracker";
 // Pretendard 가변 글꼴. 글자 범위별로 나뉜 파일 가운데 화면에 쓰인 글자의 파일만 내려받는다.
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
@@ -49,7 +50,11 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <div className="mx-auto flex min-h-dvh w-full max-w-[600px] flex-col bg-surface">
           <HistoryTracker />
           {children}
-          <BottomTabs />
+          {/* 이어서 뜨기 바는 하단 탭 바로 위에 띄우므로, 둘을 함께 가운데 열 아래쪽에 붙인다. */}
+          <div className="sticky bottom-0 z-10">
+            <ContinueBar />
+            <BottomTabs />
+          </div>
         </div>
       </body>
     </html>

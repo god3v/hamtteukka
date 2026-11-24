@@ -33,9 +33,14 @@ export type QuickCounterController = {
   changeSetSize(setSize: number | null): CounterResult<CounterValueDto>;
 };
 
-/** 퀵 카운터에 1단을 더한다. 카운터 화면과 이어서 뜨기 바가 같은 함수를 쓴다. */
-export function countUp(store: QuickCounterStore, now: string): CounterValueDto {
-  return store.update((value) => increment(value, now));
+/**
+ * 퀵 카운터에 1단을 더하고 켜 둔 피드백을 낸다. 퀵 카운터 화면, 로그아웃 홈의 구역, 이어서 뜨기 바가 같은 함수를 써서
+ * 저장과 소리·진동 규칙을 맞춘다(003 FR-41).
+ */
+export function countUp(store: QuickCounterStore, now: string, feedback?: Pick<CounterFeedback, "play">): CounterValueDto {
+  const next = store.update((value) => increment(value, now));
+  feedback?.play(store.getSnapshot().settings);
+  return next;
 }
 
 export function storageNotice(mode: StorageMode): string {
@@ -81,9 +86,8 @@ export function createQuickCounterController(
       };
     },
     increment() {
-      countUp(store, clock());
+      countUp(store, clock(), feedback);
       setPhase(COUNTING);
-      feedback?.play(store.getSnapshot().settings);
     },
     decrement() {
       let changed = false;
