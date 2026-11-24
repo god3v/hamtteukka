@@ -19,7 +19,7 @@ feature: 001-account
 | 가입 대기 | 인증은 마쳤지만 동의를 마치지 않은 사용자는 `auth.users`에만 있고 `members` 행이 없다. 이 사용자는 회원이 아니다 | FR-05, FR-27 |
 | 로그인 수단 | 회원이 가입할 때 쓴 로그인 수단을 `auth_identities`에 따로 저장한다. Supabase가 같은 이메일로 다른 수단을 자동 연결해도, 이 표에 없는 수단으로 들어온 로그인은 끝낸다 | FR-02, FR-04, NFR-06 |
 | 시스템 처리 | 가입 완료, 가입 취소, 탈퇴 접수처럼 여러 표를 함께 바꾸거나 `auth` 스키마를 읽는 일은 DB 함수가 한 트랜잭션으로 처리한다 | FR-11, FR-23, FR-27 |
-| 예약 작업 | 24시간 안의 삭제와 3개월 뒤 파기는 DB의 예약 작업(pg_cron)이 처리한다 | FR-23, FR-27, FR-29 |
+| 예약 작업 | 24시간 안의 삭제와 3개월 뒤 파기는 DB의 예약 작업(pg_cron)이 실행한다. 탈퇴 처리는 저장소 파일을 지워야 하므로, pg_cron이 웹 서버의 작업 경로를 호출하고 서버가 shared 함수로 처리한다 | FR-23, FR-27, FR-29, 004 FR-17 |
 | 메일 | 약관 변경 안내와 유출 통지 메일은 서버가 메일 API로 보내고, 보낸 결과를 발송 기록에 남긴다. 메일 서비스는 [OD-21](../../../decisions/README.md)에서 정한다 | FR-30~FR-33 |
 | 데이터 접근 | 인증 호출과 회원 데이터 접근은 아래 shared 함수로만 한다. `@supabase/supabase-js`와 `@supabase/ssr`은 packages/shared 안에서만 쓴다 | NFR-04, ADR-0003 |
 | 데이터 위치와 토큰 | 회원 데이터는 서울 리전(ap-northeast-2)의 Supabase 프로젝트에 둔다. 이 프로젝트는 비대칭 서명 키로 JWT를 발급하게 설정해, R4의 Spring 서버가 JWKS로 같은 토큰을 검증할 수 있게 한다 | NFR-05, NFR-07, ADR-0005 |
@@ -77,6 +77,7 @@ classDiagram
     +Date requestedAt
     +Date scheduledAt
     +Date purgedAt
+    +number attempts
   }
   class DeletionStatus {
     <<enumeration>>
@@ -188,6 +189,7 @@ classDiagram
   class accountServerJobs {
     <<module>>
     +recordLogin(input) void
+    +processAccountDeletions() AccountDeletionDto[]
     +sendSignupTermsNotices(input) EmailDeliveryDto[]
     +sendPendingEmails() EmailDeliveryDto[]
     +listMemberEmails() MemberEmailDto[]
@@ -245,6 +247,7 @@ accountApi는 화면, Server Action, Next.js의 요청 처리(proxy)가 호출�
 | `requestAccountDeletion` | 없음 | `AccountDeletionDto` | `DELETION_ALREADY_REQUESTED`, `NOT_MEMBER` | FR-22, FR-23, FR-24 |
 | `updateSession` | 요청과 응답의 쿠키 어댑터 | `SessionStateDto` (세션 유무, 세션이 끝났는지) | 없음 | FR-17, FR-18, FR-20 |
 | `recordLogin` | 회원 ID, 로그인 수단, IP 주소 | 없음 | `UNEXPECTED` | FR-29 |
+| `processAccountDeletions` | 없음 | `AccountDeletionDto[]` (이번 실행에서 처리한 탈퇴) | `UNEXPECTED` | FR-23, FR-25, 004 FR-17 |
 | `sendSignupTermsNotices` | 방금 가입한 회원 ID | `EmailDeliveryDto[]` | `UNEXPECTED` | FR-32 |
 | `sendPendingEmails` | 없음 | `EmailDeliveryDto[]` (이번에 보낸 메일) | `UNEXPECTED` | FR-30, FR-32, FR-33 |
 | `listMemberEmails` | 없음 | `MemberEmailDto[]` (이메일이 있는 회원) | `UNEXPECTED` | FR-31 |

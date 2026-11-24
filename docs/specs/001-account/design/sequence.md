@@ -207,6 +207,8 @@ sequenceDiagram
   participant Auth as Supabase Auth
   participant DB as Supabase DB와 RLS
   participant Cron as pg_cron 예약 작업
+  participant Job as 탈퇴 처리 작업
+  participant Storage as Supabase Storage
   User->>Web: 회원 탈퇴를 연다
   Web-->>User: 삭제 데이터, 보존 데이터, 24시간 안 삭제, 되돌릴 수 없음 안내
   User->>Web: 탈퇴를 확정한다
@@ -219,13 +221,21 @@ sequenceDiagram
   Action-->>Web: 접수 완료
   Web-->>User: 접수 완료 안내
   loop 15분마다
-    Cron->>DB: process_account_deletions()
-    DB->>DB: requested 행을 scheduled로 바꾼다
-    DB->>DB: auth.users 행을 지워 회원 데이터를 함께 지우고 purged를 기록한다
+    Cron->>Job: pg_net으로 작업 경로를 호출한다 (비밀 값 포함)
+    Job->>Shared: processAccountDeletions()
+    Shared->>DB: schedule_account_deletions()
+    DB-->>Shared: scheduled 행 목록
+    Shared->>Storage: 회원의 저장소 파일을 지운다 (R1 004부터)
+    alt 파일과 사용자를 모두 지웠다
+      Shared->>Auth: Admin API로 사용자를 지워 회원 데이터를 함께 지운다
+      Shared->>DB: finalize_account_deletion()
+    else 한 단계라도 실패했다
+      Shared->>DB: record_account_deletion_failure()
+    end
   end
 ```
 
-탈퇴는 내 정보, 재동의 화면, 시행 뒤의 약관 변경 안내 창에서 열 수 있고, 동의를 마치지 않은 회원도 탈퇴 화면을 열어 접수할 수 있다(AC-31). 탈퇴 화면은 안내 한 화면과 확정 버튼 하나로 끝나므로, 가입 동의 화면보다 단계가 많지 않다(NFR-01, AC-12). 삭제가 끝나면 로그인 기록만 분리된 테이블에 남는다(AC-13).
+탈퇴는 내 정보, 재동의 화면, 시행 뒤의 약관 변경 안내 창에서 열 수 있고, 동의를 마치지 않은 회원도 탈퇴 화면을 열어 접수할 수 있다(AC-31). 탈퇴 화면은 안내 한 화면과 확정 버튼 하나로 끝나므로, 가입 동의 화면보다 단계가 많지 않다(NFR-01, AC-12). Storage의 파일은 FK 연쇄 삭제로 지워지지 않으므로, 사용자를 지우기 전에 저장소 파일부터 지우고 모두 지운 뒤에만 purged를 기록한다(004 FR-17, AC-17). 실패한 행은 scheduled로 남아 15분 뒤 다시 시도하므로, 접수한 때부터 24시간 안에 purged까지 끝난다. 삭제가 끝나면 로그인 기록만 분리된 테이블에 남는다(AC-13).
 
 ## 약관 새 버전을 공지하고 알린다
 
@@ -291,9 +301,9 @@ sequenceDiagram
 sequenceDiagram
   participant Cron as pg_cron 예약 작업
   participant DB as Supabase DB
-  loop 1시간마다
+  loop 15분마다
     Cron->>DB: cleanup_pending_signups()
-    DB->>DB: 만든 지 24시간이 지난 가입 대기 사용자의 auth.users 행을 지운다
+    DB->>DB: 만든 지 23시간 45분이 지난 가입 대기 사용자의 auth.users 행을 지운다
   end
   loop 하루마다
     Cron->>DB: purge_old_login_logs()
@@ -301,7 +311,7 @@ sequenceDiagram
   end
 ```
 
-예약 작업은 DB 안에서 실행되므로 브라우저나 서버 코드를 거치지 않는다. 가입 대기 사용자의 로그인 정보는 24시간 뒤에 지워지고, 같은 계정으로 다시 로그인하면 가입 절차를 처음부터 진행한다(AC-20). 로그인 기록은 3개월이 지난 행만 지우고 그보다 새 행은 남긴다(AC-24). 탈퇴 삭제 작업은 [탈퇴 시나리오](#탈퇴를-요청하고-삭제한다)에 있다(AC-13).
+이 두 작업은 DB 안에서만 실행되므로 브라우저나 서버 코드를 거치지 않는다. 가입 대기 정리는 15분마다 실행하고 23시간 45분이 지난 행을 지우므로, 인증한 때부터 24시간이 되기 전에 로그인 정보가 지워진다. 그 뒤 같은 계정으로 다시 로그인하면 가입 절차를 처음부터 진행한다(AC-20). 로그인 기록은 3개월이 지난 행만 지우고 그보다 새 행은 남긴다(AC-24). 탈퇴 삭제는 저장소 파일을 지워야 하므로 서버 작업 경로를 거치며, [탈퇴 시나리오](#탈퇴를-요청하고-삭제한다)에 있다(AC-13).
 
 ## 관련 문서
 

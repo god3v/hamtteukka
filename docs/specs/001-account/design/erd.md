@@ -53,7 +53,7 @@ erDiagram
     uuid member_id FK
     uuid terms_version_id FK
     boolean agreed "동의 여부"
-    timestamptz accepted_at "서버 시각"
+    timestamptz accepted_at "서버 시각, 기본값으로만 채움"
   }
   terms_notice_acknowledgements {
     uuid member_id PK, FK
@@ -88,6 +88,8 @@ erDiagram
     timestamptz requested_at
     timestamptz scheduled_at
     timestamptz purged_at
+    int attempts "삭제를 시도한 횟수"
+    text last_error "마지막 실패 이유"
   }
   login_logs {
     bigint id PK
@@ -135,13 +137,17 @@ erDiagram
 | terms_versions | public | 약관 버전. (kind, version)에 UNIQUE 제약을 둔다. `announced_at`은 `effective_at`보다 늦을 수 없고, 첫 버전이 아니면 시행 7일 전, `material_change`이면 30일 전보다 늦을 수 없다(CHECK 제약). 버전은 SQL 마이그레이션으로 등록한다 | FR-08, FR-09, FR-14, FR-28, FR-32 |
 | terms_acceptances | public | 동의 기록. 추가만 하며, 회원이 삭제되면 함께 지운다. 약관 버전은 지울 수 없게 참조한다 | FR-10, FR-11, FR-28, NFR-03 |
 | terms_notice_acknowledgements | public | 불리하거나 중요한 변경의 안내 창에서 확인을 누른 기록 | FR-32 |
-| account_deletions | public | 탈퇴 처리 상태와 상태별 시각. 회원 행이 지워지면 `member_id`를 비운다(ON DELETE SET NULL). `status`가 purged가 아닌 행은 회원마다 하나만 둔다(부분 UNIQUE 인덱스) | FR-22, FR-23, FR-24 |
+| account_deletions | public | 탈퇴 처리 상태와 상태별 시각. 회원 행이 지워지면 `member_id`를 비운다(ON DELETE SET NULL). `status`가 purged가 아닌 행은 회원마다 하나만 둔다(부분 UNIQUE 인덱스). 삭제에 실패하면 시도 횟수와 마지막 실패 이유를 남긴다 | FR-22, FR-23, FR-24 |
 | login_logs | public | 로그인 기록. 회원 테이블과 FK를 두지 않아 purged 단계에서 지워지지 않고, 3개월이 지나면 예약 작업이 지운다 | FR-26, FR-29 |
 | breach_notices | public | 유출 안내. 운영자가 SQL로 등록하고, 게시 기간에는 로그인하지 않아도 읽을 수 있다 | FR-30, FR-33 |
 | breach_notice_views | public | 이메일이 없는 회원에게 유출 안내를 보여 준 기록 | FR-30, FR-33 |
 | email_deliveries | public | 메일 발송 대기열이자 발송 기록. `terms_version_id`와 `breach_notice_id` 가운데 하나만 채우고, 같은 회원에게 같은 메일을 두 번 만들지 않게 UNIQUE 제약을 둔다 | FR-30, FR-31, FR-32, FR-33 |
 
-회원 소유 테이블의 FK는 모두 `members(id)`를 ON DELETE CASCADE로 참조한다. 그래서 탈퇴 처리가 `auth.users` 행을 지우면 `members`와, `members`를 참조하는 동의 기록, 로그인 수단, 안내 확인 기록, 발송 기록이 함께 지워진다(FR-25). R1 이후 기능이 추가하는 회원 데이터도 같은 방식으로 `members(id)`를 참조한다.
+회원 소유 테이블의 FK는 모두 `members(id)`를 ON DELETE CASCADE로 참조한다. 그래서 탈퇴 처리가 `auth.users` 행을 지우면 `members`와, `members`를 참조하는 동의 기록, 로그인 수단, 안내 확인 기록, 발송 기록이 함께 지워진다(FR-25). R1 이후 기능이 추가하는 회원 데이터 행도 같은 방식으로 `members(id)`를 참조한다.
+
+Storage 버킷의 파일은 이 연쇄 삭제로 지워지지 않는다. 그래서 탈퇴 처리 작업은 `auth.users` 행을 지우기 전에 회원의 저장소 파일을 Storage API로 먼저 지우고, 파일을 모두 지운 뒤에만 purged를 기록한다(004 FR-17, AC-17). 자료 기록 없이 남은 파일을 찾아 지우는 정리 작업은 004 설계가 같은 작업 경로에 더한다(004 NFR-09).
+
+`terms_acceptances.accepted_at`, `terms_notice_acknowledgements.acknowledged_at`, `breach_notice_views.viewed_at`은 기본값 `now()`로만 채운다. `authenticated` 역할에는 이 세 테이블에서 시각 열을 뺀 열에만 INSERT 권한을 주므로(열 권한), 회원이 시각을 직접 넣으면 요청이 거부된다(FR-11).
 
 ## 현재 회원 ID
 
@@ -166,14 +172,19 @@ erDiagram
 | `cancel_signup()` | `authenticated` | `members` 행이 없는 현재 사용자의 `auth.users` 행을 지운다 | FR-16, FR-27, AC-19 |
 | `account_gate()` | `authenticated` | 계정 상태 값과, 안내할 약관 버전이나 유출 안내를 알려 준다. 판단 순서는 [상태 전이](state.md#계정-상태-확인-순서)를 따른다 | FR-05, FR-24, FR-28, FR-30, FR-32 |
 | `request_account_deletion()` | `authenticated` | 현재 회원의 `account_deletions` 행을 requested로 추가한다 | FR-22, FR-23, AC-12 |
-| `process_account_deletions()` | pg_cron, 15분마다 | requested 행을 scheduled로 바꾸고, scheduled 행의 `auth.users`를 지운 뒤 purged와 `purged_at`을 기록한다 | FR-23, FR-25, AC-13 |
-| `cleanup_pending_signups()` | pg_cron, 1시간마다 | 만든 지 24시간이 지났고 `members` 행이 없는 `auth.users` 행을 지운다 | FR-27, AC-20 |
+| `request_account_deletion_job()` | pg_cron, 15분마다 | pg_net으로 웹 서버의 탈퇴 처리 작업 경로를 호출한다. 호출에 쓰는 비밀 값은 Supabase Vault에 둔다 | FR-23 |
+| `schedule_account_deletions()` | `service_role` (탈퇴 처리 작업) | requested 행을 scheduled로 바꾸고, scheduled 행 목록을 알려 준다 | FR-23 |
+| `record_account_deletion_failure(deletion_id, error)` | `service_role` (탈퇴 처리 작업) | 시도 횟수를 늘리고 마지막 실패 이유를 남긴다. 행은 scheduled로 둔다 | FR-23 |
+| `finalize_account_deletion(deletion_id)` | `service_role` (탈퇴 처리 작업) | 회원 행이 이미 지워졌으면 purged와 `purged_at`을 기록한다 | FR-23, FR-25, AC-13 |
+| `cleanup_pending_signups()` | pg_cron, 15분마다 | 만든 지 23시간 45분이 지났고 `members` 행이 없는 `auth.users` 행을 지운다 | FR-27, AC-20 |
 | `purge_old_login_logs()` | pg_cron, 하루마다 | `logged_in_at`이 3개월 지난 로그인 기록을 지운다 | FR-26, FR-29, AC-24 |
 | `enqueue_terms_change_emails(terms_version_id)` | `service_role` (운영자) | 공지를 시작할 때 가입해 있던 회원 가운데 이메일이 있는 회원의 발송 대기 행을 만든다 | FR-32, AC-30 |
 | `enqueue_breach_emails(breach_notice_id)` | `service_role` (운영자) | 이메일이 있는 모든 회원의 발송 대기 행을 만든다 | FR-30, FR-33, AC-32 |
 | `member_email_list()` | `service_role` (운영자) | 이메일이 있는 회원의 이메일 목록을 알려 준다 | FR-31, AC-25 |
 
-예약 작업의 간격은 24시간 기한(FR-23, FR-27)보다 충분히 짧게 정했다. pg_cron을 무료 요금제에서 쓸 수 있는지와, 예약 작업에서 `auth.users` 행을 지울 수 있는지는 구현 Task에서 Supabase 문서와 로컬 스택으로 확인한다. 지울 수 없으면 같은 일을 Supabase Admin API로 하는 서버 작업으로 바꾸며, 그때는 이 표를 먼저 고친다.
+탈퇴 처리 작업은 웹 서버의 작업 경로이며, 요청의 비밀 값을 확인한 뒤 shared의 `processAccountDeletions()`를 부른다. 이 함수는 `schedule_account_deletions()`가 알려 준 행마다 저장소 파일 삭제, Supabase Admin API의 사용자 삭제, `finalize_account_deletion()`을 차례로 실행한다. 한 단계라도 실패하면 `record_account_deletion_failure()`로 기록하고 다음 실행에서 처음부터 다시 시도한다. 사용자 삭제가 끝난 뒤 purged 기록만 실패해도, 다음 실행에서 `member_id`가 빈 행을 purged로 마무리한다.
+
+가입 대기 사용자 정리는 15분마다 실행하고 23시간 45분이 지난 행을 지우므로, 인증한 때부터 24시간이 되기 전에 삭제가 끝난다(AC-20). 탈퇴 처리도 15분마다 다시 시도하므로 접수한 때부터 24시간 안에 purged까지 끝난다. pg_cron과 pg_net을 무료 요금제에서 쓸 수 있는지와, 예약 작업에서 `auth.users` 행을 지울 수 있는지는 구현 Task에서 Supabase 문서와 로컬 스택으로 확인한다. 안 되면 이 표를 먼저 고친다.
 
 ## RLS 정책
 

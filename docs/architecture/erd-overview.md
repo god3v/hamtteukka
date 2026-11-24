@@ -105,7 +105,7 @@ members를 중심으로 계정(001), 프로젝트(002), 카운터(003), 도안 �
 
 001 설계는 이 밖에 약관 변경 안내 확인 기록(terms_notice_acknowledgements), 유출 안내(breach_notices)와 본 기록(breach_notice_views), 메일 발송 기록(email_deliveries)을 둔다. 정확한 열과 RLS 정책은 [001 design/erd.md](../specs/001-account/design/erd.md)에 있다. 광고성 정보 수신 동의는 R2에서 받는다.
 
-OD-02에서 정한 대로, 탈퇴하면 유예 기간 없이 24시간 안에 삭제한다. 예약 작업이 `auth.users` 행을 지우면, members와 회원 소유 테이블은 ON DELETE CASCADE로 함께 지워진다. 002~004의 회원 데이터도 members(id)를 같은 방식으로 참조한다.
+OD-02에서 정한 대로, 탈퇴하면 유예 기간 없이 24시간 안에 삭제한다. 탈퇴 처리 작업이 회원의 저장소 파일을 먼저 지우고 `auth.users` 행을 지우면, members와 회원 소유 테이블은 ON DELETE CASCADE로 함께 지워진다. 002~004의 회원 데이터도 members(id)를 같은 방식으로 참조한다.
 
 ## R2 예정 핵심 테이블
 

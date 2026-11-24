@@ -18,17 +18,19 @@ stateDiagram-v2
   state "삭제 완료" as Purged
   [*] --> Requested : 탈퇴 확정
   Requested --> Scheduled : 예약 작업이 삭제를 예약
-  Scheduled --> Purged : 예약 작업이 회원 데이터를 삭제
+  Scheduled --> Scheduled : 삭제 실패, 다음 실행에서 다시 시도
+  Scheduled --> Purged : 탈퇴 처리 작업이 파일과 회원 데이터를 삭제
   Purged --> [*]
 ```
 
-탈퇴 처리는 `account_deletions.status`의 requested, scheduled, purged를 차례로 거치고, 상태마다 `requested_at`, `scheduled_at`, `purged_at`을 남긴다(FR-23). 되돌아가는 전이가 없으므로 접수한 탈퇴는 철회할 수 없다. 예약 작업은 15분마다 실행되므로 접수한 때부터 24시간 안에 purged까지 끝난다.
+탈퇴 처리는 `account_deletions.status`의 requested, scheduled, purged를 차례로 거치고, 상태마다 `requested_at`, `scheduled_at`, `purged_at`을 남긴다(FR-23). 되돌아가는 전이가 없으므로 접수한 탈퇴는 철회할 수 없다. 탈퇴 처리 작업은 15분마다 실행되고 실패한 행을 다음 실행에서 다시 시도하므로, 접수한 때부터 24시간 안에 purged까지 끝난다.
 
 | 현재 | 이벤트 | 다음 | 조건 | 근거 |
 |---|---|---|---|---|
 | 없음 | 탈퇴 확정 | 요청 접수(Requested) | 처리 중인 탈퇴가 없는 회원. 접수와 함께 그 회원의 모든 세션을 끝낸다 | FR-22, FR-24, AC-12 |
-| 요청 접수(Requested) | 예약 작업 실행 | 삭제 예정(Scheduled) | 없음 | FR-23 |
-| 삭제 예정(Scheduled) | 예약 작업 실행 | 삭제 완료(Purged) | `auth.users` 행을 지우면 회원과 회원 데이터가 함께 지워지고, `member_id`는 비워진다. 로그인 기록은 남는다 | FR-25, FR-26, AC-13 |
+| 요청 접수(Requested) | 탈퇴 처리 작업 실행 | 삭제 예정(Scheduled) | 없음 | FR-23 |
+| 삭제 예정(Scheduled) | 탈퇴 처리 작업 실행 | 삭제 완료(Purged) | 회원의 저장소 파일을 모두 지운 뒤 `auth.users` 행을 지운다. 회원과 회원 데이터가 함께 지워지고 `member_id`는 비워진다. 로그인 기록은 남는다 | FR-25, FR-26, AC-13, 004 AC-17 |
+| 삭제 예정(Scheduled) | 삭제 실패 | 삭제 예정(Scheduled) | 시도 횟수와 마지막 실패 이유를 남기고 다음 실행에서 다시 시도한다 | FR-23 |
 
 ## 계정 상태
 
