@@ -22,6 +22,7 @@ feature: 001-account
 | [약관 새 버전을 공지하고 알린다](#약관-새-버전을-공지하고-알린다) | AC-10, AC-22, AC-30, AC-34 |
 | [유출 안내를 게시하고 알린다](#유출-안내를-게시하고-알린다) | AC-25, AC-26, AC-32 |
 | [예약 작업이 기록을 정리한다](#예약-작업이-기록을-정리한다) | AC-13, AC-20, AC-24 |
+| [네이버 사용자 정보를 변환한다](#네이버-사용자-정보를-변환한다) | AC-35 |
 
 AC-14와 AC-15는 화면 흐름이 아니라 RLS 정책으로 확인하므로 [데이터 모델과 RLS 정책](erd.md#rls-정책)에서 다룬다.
 
@@ -34,7 +35,7 @@ sequenceDiagram
   participant Action as Server Action
   participant Shared as packages/shared 함수
   participant Auth as Supabase Auth
-  participant Provider as 카카오나 구글
+  participant Provider as 카카오, 네이버, 구글
   participant DB as Supabase DB와 RLS
   User->>Web: 카카오로 시작하기를 누른다
   Web->>Shared: startOAuthLogin(kakao, 돌아갈 경로)
@@ -73,7 +74,7 @@ sequenceDiagram
   end
 ```
 
-가입 동의 화면도 체크 항목을 검사하지만, 회원을 만들지는 `complete_signup()`이 판단한다. 회원, 로그인 수단, 동의 기록은 한 트랜잭션으로 만들어지므로 하나라도 실패하면 아무것도 남지 않는다(AC-03, AC-09). 카카오가 이메일을 주지 않으면 이메일이 빈 회원이 만들어진다(AC-02). `sendSignupTermsNotices`는 공지 중인 불리하거나 중요한 변경이 있고 회원에게 이메일이 있을 때만 메일을 보낸다(AC-34).
+가입 동의 화면도 체크 항목을 검사하지만, 회원을 만들지는 `complete_signup()`이 판단한다. 회원, 로그인 수단, 동의 기록은 한 트랜잭션으로 만들어지므로 하나라도 실패하면 아무것도 남지 않는다(AC-03, AC-09). 카카오나 네이버가 이메일을 주지 않으면 이메일이 빈 회원이 만들어진다(AC-02, AC-35). 네이버는 커스텀 OAuth 제공자이므로, Supabase Auth가 사용자 정보를 읽을 때 [변환 경로](#네이버-사용자-정보를-변환한다)를 거친다. `sendSignupTermsNotices`는 공지 중인 불리하거나 중요한 변경이 있고 회원에게 이메일이 있을 때만 메일을 보낸다(AC-34).
 
 ## 가입을 취소하거나 마치지 않고 떠난다
 
@@ -313,10 +314,33 @@ sequenceDiagram
 
 이 두 작업은 DB 안에서만 실행되므로 브라우저나 서버 코드를 거치지 않는다. 가입 대기 정리는 15분마다 실행하고 23시간 45분이 지난 행을 지우므로, 인증한 때부터 24시간이 되기 전에 로그인 정보가 지워진다. 그 뒤 같은 계정으로 다시 로그인하면 가입 절차를 처음부터 진행한다(AC-20). 로그인 기록은 3개월이 지난 행만 지우고 그보다 새 행은 남긴다(AC-24). 탈퇴 삭제는 저장소 파일을 지워야 하므로 서버 작업 경로를 거치며, [탈퇴 시나리오](#탈퇴를-요청하고-삭제한다)에 있다(AC-13).
 
+## 네이버 사용자 정보를 변환한다
+
+```mermaid
+sequenceDiagram
+  participant Auth as Supabase Auth
+  participant Route as 사용자 정보 변환 경로
+  participant Shared as packages/shared 함수
+  participant Naver as 네이버
+  Auth->>Route: 사용자 정보 요청 (네이버 액세스 토큰)
+  Route->>Naver: 사용자 정보 조회 (/v1/nid/me)
+  Naver-->>Route: resultcode, message, response
+  Route->>Shared: toStandardUserInfo(응답)
+  alt 조회에 성공했다
+    Shared-->>Route: sub, email, name
+    Route-->>Auth: 평평한 형식의 사용자 정보
+  else 토큰이 잘못되었거나 조회에 실패했다
+    Shared-->>Route: AUTH_FAILED
+    Route-->>Auth: 401 응답
+  end
+```
+
+Supabase Auth는 네이버에서 토큰을 받은 뒤, 네이버 제공자에 등록한 사용자 정보 주소인 `/api/auth/naver/userinfo`를 호출한다. 이 경로는 네이버 응답의 `response`를 꺼내 `id`를 `sub`로 바꾸고, 이메일이 없으면 이메일 필드를 빼고 응답한다. 경로는 Supabase에 접근하지 않으며, 응답을 바꾸는 규칙은 `toStandardUserInfo`의 단위 테스트로 확인한다(AC-35). 네이버 응답 형식은 [네이버 로그인 연결 확인](../../../research/2026-11-24-naver-login-supabase.md)에 기록했다.
+
 ## 관련 문서
 
 - [요구사항](../requirements.md): 시나리오가 확인하는 AC
 - [도메인 모델](domain.md): 시나리오에 나오는 shared 함수와 DTO
 - [데이터 모델과 RLS 정책](erd.md): 시나리오에서 허용하거나 거부하는 정책과 DB 함수
 - [상태 전이](state.md): 계정 상태 확인 순서
-- [ADR-0005 Supabase Auth와 카카오·구글 로그인](../../../decisions/0005-auth-supabase-social-login.md): OAuth 로그인 흐름
+- [ADR-0015 Supabase Auth와 카카오·구글·네이버 로그인](../../../decisions/0015-auth-providers-with-naver.md): OAuth 로그인 흐름과 네이버 연결 방법

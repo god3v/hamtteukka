@@ -33,7 +33,7 @@ erDiagram
   auth_identities {
     uuid id PK
     uuid member_id FK "R0에서는 회원당 하나"
-    text provider "kakao, google"
+    text provider "kakao, naver, google"
     text provider_user_id "provider와 함께 UNIQUE"
     timestamptz created_at
   }
@@ -94,7 +94,7 @@ erDiagram
   login_logs {
     bigint id PK
     uuid member_id "FK 없음, 탈퇴 뒤에도 보관"
-    text provider "kakao, google"
+    text provider "kakao, naver, google"
     inet ip_address "로그인 요청의 IP"
     timestamptz logged_in_at
   }

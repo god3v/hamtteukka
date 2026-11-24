@@ -15,7 +15,7 @@ ADR은 여러 기능에 영향을 주거나 되돌리기 어려운 결정을 기
 ### 파일과 번호
 
 - 파일 이름은 `NNNN-<영문 소문자 슬러그>.md` 형식을 따른다. 번호는 네 자리이며 작성 순서대로 하나씩 늘린다.
-- 다음에 쓸 ADR 번호는 0015다.
+- 다음에 쓸 ADR 번호는 0016이다.
 - 번호는 다시 쓰지 않는다. 기각되거나 대체된 ADR도 번호와 파일을 그대로 유지한다.
 - ADR 파일은 삭제하지 않는다. 결정을 바꿀 때는 새 ADR을 쓰고, 기존 ADR은 대체됨 상태로 바꾼다.
 
@@ -97,7 +97,7 @@ stateDiagram-v2
 | ADR-0002 | [Next.js·Supabase·Vercel 스택과 서울 리전](0002-stack-nextjs-supabase-vercel.md) | 확정 | 2026-11-18 |
 | ADR-0003 | [Supabase 접근을 packages/shared로 제한](0003-data-access-boundary.md) | 확정 | 2026-11-18 |
 | ADR-0004 | [RLS를 1차 권한 검사로 사용](0004-rls-authorization.md) | 확정 | 2026-11-18 |
-| ADR-0005 | [Supabase Auth와 카카오·구글 로그인](0005-auth-supabase-social-login.md) | 확정 | 2026-11-18 |
+| ADR-0005 | [Supabase Auth와 카카오·구글 로그인](0005-auth-supabase-social-login.md) | 대체됨 (→ ADR-0015) | 2026-11-18 |
 | ADR-0006 | [DB 마이그레이션 소유권을 스키마별로 분리](0006-migration-ownership.md) | 확정 | 2026-11-18 |
 | ADR-0007 | [판매에 대비한 데이터 원칙](0007-sales-ready-data-model.md) | 확정 | 2026-11-18 |
 | ADR-0008 | [개인 뜨개 도구를 MVP로 정함](0008-mvp-personal-tools.md) | 확정 | 2026-11-18 |
@@ -107,6 +107,7 @@ stateDiagram-v2
 | ADR-0012 | [계획된 작업만 이슈로 관리](0012-issue-for-planned-work-only.md) | 확정 | 2026-11-18 |
 | ADR-0013 | [dev 브랜치에서 확인하고 main 병합으로 배포](0013-dev-main-branch-flow.md) | 확정 | 2026-11-18 |
 | ADR-0014 | [흰 바탕과 강조 색 하나, 하단 탭 구조로 화면을 만든다](0014-design-direction.md) | 확정 | 2026-11-19 |
+| ADR-0015 | [Supabase Auth와 카카오·구글·네이버 로그인](0015-auth-providers-with-naver.md) | 확정 | 2026-11-24 |
 
 ## 미결정 항목
 

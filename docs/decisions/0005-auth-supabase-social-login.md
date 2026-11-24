@@ -1,7 +1,7 @@
 ---
 doc_type: explanation
-status: accepted
-updated: 2026-11-18
+status: superseded
+updated: 2026-11-24
 decided: 2026-11-18
 ---
 
@@ -13,11 +13,11 @@ decided: 2026-11-18
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 확정 (accepted) |
+| 상태 | 대체됨 (→ [ADR-0015](0015-auth-providers-with-naver.md)) |
 | 결정일 | 2026-11-18 |
 | 결정자 | 프로젝트 소유자 |
 | 이 ADR이 대신하는 이전 ADR | 없음 |
-| 이 ADR을 대신하는 새 ADR | 없음 |
+| 이 ADR을 대신하는 새 ADR | [ADR-0015](0015-auth-providers-with-naver.md) |
 
 ## 맥락
 
